@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 project_rules.md
+.env  
+.env.development  
+.env.production  
+.env.local
