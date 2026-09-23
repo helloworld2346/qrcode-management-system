@@ -15,11 +15,11 @@
 .dark {  
   --color-primary: 49 130 206;  
   --color-primary-hover: 66 153 225;  
-  --color-accent: 248 113 113;  
+  --color-accent: 185 28 28;
   --color-bg: 15 23 42;  
   --color-surface: 30 41 59;  
   --color-text: 241 245 249;  
-  --color-border: 30 41 59;  
+  --color-border: 71 85 105;
 }
   
 html, body {  
