@@ -28,3 +28,8 @@ project_rules.md
 .env.development  
 .env.production  
 .env.local
+
+# Build artifacts  
+vite.config.js  
+vite.config.d.ts  
+*.tsbuildinfo
