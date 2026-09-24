@@ -1,6 +1,5 @@
 import { NavLink } from "react-router-dom";
 
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { useAuthStore } from "@/store/auth.store";
 
 import { UserMenu } from "./UserMenu";
@@ -32,7 +31,7 @@ export function Topbar() {
     ].join(" ");
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-bg no-print">
+    <header className="sticky top-0 z-20 bg-bg no-print">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6">
         <div className="flex items-center">
           <span className="mr-2 flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-lg font-bold text-white">
@@ -66,7 +65,6 @@ export function Topbar() {
         </nav>
 
         <div className="flex items-center">
-          <ThemeToggle className="mr-3" />
           <UserMenu />
         </div>
       </div>
