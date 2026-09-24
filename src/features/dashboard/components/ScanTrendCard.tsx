@@ -1,8 +1,7 @@
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   CartesianGrid,
-  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -31,10 +30,16 @@ export function ScanTrendCard() {
       </div>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart
+          <AreaChart
             data={scanTrend}
             margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
           >
+            <defs>
+              <linearGradient id="scanArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={series[0]} stopOpacity={0.4} />
+                <stop offset="100%" stopColor={series[0]} stopOpacity={0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke={track}
@@ -55,15 +60,20 @@ export function ScanTrendCard() {
               allowDecimals={false}
             />
             <Tooltip
-              cursor={{ fill: `${series[0]}14` }}
+              cursor={{ stroke: series[0], strokeWidth: 1 }}
               content={<ChartTooltip />}
             />
-            <Bar dataKey="scans" name="Lượt quét" radius={[6, 6, 0, 0]}>
-              {scanTrend.map((entry, idx) => (
-                <Cell key={entry.day} fill={series[idx % series.length]} />
-              ))}
-            </Bar>
-          </BarChart>
+            <Area
+              type="monotone"
+              dataKey="scans"
+              name="Lượt quét"
+              stroke={series[0]}
+              strokeWidth={2.5}
+              fill="url(#scanArea)"
+              dot={{ r: 3, fill: series[0], strokeWidth: 0 }}
+              activeDot={{ r: 5, fill: series[0], strokeWidth: 0 }}
+            />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </div>

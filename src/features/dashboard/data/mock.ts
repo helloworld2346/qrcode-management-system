@@ -52,48 +52,22 @@ export const statusData: StatusSlice[] = [
   { name: "Hỏng", value: 50 },
 ];
 
-export interface InventoryDueItem {
-  code: string;
-  name: string;
+export interface UnitAsset {
   unit: string;
-  overdueDays: number;
+  value: number;
 }
 
-export const inventoryDue: InventoryDueItem[] = [
-  {
-    code: "TS-2024-0417",
-    name: "Máy phát điện 5kVA",
-    unit: "Trung đoàn 1",
-    overdueDays: 12,
-  },
-  {
-    code: "VK-2023-0089",
-    name: "Súng tiểu liên AK-47",
-    unit: "Tiểu đoàn 3",
-    overdueDays: 9,
-  },
-  {
-    code: "TS-2024-0621",
-    name: "Bộ đàm cầm tay",
-    unit: "Trung đoàn 2",
-    overdueDays: 7,
-  },
-  {
-    code: "VK-2022-0154",
-    name: "Súng ngắn K54",
-    unit: "Ban Chỉ huy",
-    overdueDays: 5,
-  },
-  {
-    code: "TS-2024-0733",
-    name: "Xe tải quân sự Ural",
-    unit: "Tiểu đoàn Vận tải",
-    overdueDays: 3,
-  },
-  {
-    code: "TS-2023-0512",
-    name: "Máy tính trạm chỉ huy",
-    unit: "Phòng Tham mưu",
-    overdueDays: 2,
-  },
+export const assetsByUnit: UnitAsset[] = [
+  { unit: "Trung đoàn 1", value: 342 },
+  { unit: "Trung đoàn 2", value: 298 },
+  { unit: "Tiểu đoàn 3", value: 187 },
+  { unit: "Tiểu đoàn Vận tải", value: 156 },
+  { unit: "Ban Chỉ huy", value: 101 },
 ];
+
+export interface QrAssignment {
+  assigned: number;
+  total: number;
+}
+
+export const qrAssignment: QrAssignment = { assigned: 1120, total: 1284 };

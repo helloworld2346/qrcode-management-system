@@ -10,7 +10,7 @@ export function StatusDonutCard() {
   const total = statusData.reduce((sum, s) => sum + s.value, 0);
 
   return (
-    <div className="relative mb-6 rounded-2xl p-5">
+    <div className="relative mb-6 rounded-2xl border border-border bg-surface p-5 shadow-sm">
       <h2 className="mb-4 text-base font-semibold text-text">
         Phân bổ tình trạng tài sản
       </h2>
