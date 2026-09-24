@@ -3,17 +3,19 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { statusData } from "@/features/dashboard/data/mock";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
 
+import { ChartTooltip } from "./ChartTooltip";
+
 export function StatusDonutCard() {
-  const { series, tooltipBg } = useChartColors();
+  const { series } = useChartColors();
   const total = statusData.reduce((sum, s) => sum + s.value, 0);
 
   return (
-    <div className="relative mb-6 overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-sm">
+    <div className="relative mb-6 rounded-2xl p-5">
       <h2 className="mb-4 text-base font-semibold text-text">
         Phân bổ tình trạng tài sản
       </h2>
 
-      <div className="relative mx-auto h-52 w-52">
+      <div className="relative mx-auto h-56 w-52">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -31,12 +33,9 @@ export function StatusDonutCard() {
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{
-                borderRadius: 12,
-                border: "none",
-                background: tooltipBg,
-                color: "#fff",
-              }}
+              content={<ChartTooltip />}
+              allowEscapeViewBox={{ x: true, y: true }}
+              wrapperStyle={{ zIndex: 20 }}
             />
           </PieChart>
         </ResponsiveContainer>

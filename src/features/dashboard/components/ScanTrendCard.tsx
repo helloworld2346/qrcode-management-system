@@ -11,9 +11,10 @@ import {
 
 import { scanTrend } from "@/features/dashboard/data/mock";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
+import { ChartTooltip } from "./ChartTooltip";
 
 export function ScanTrendCard() {
-  const { series, axis, track, tooltipBg } = useChartColors();
+  const { series, axis, track } = useChartColors();
 
   return (
     <div
@@ -55,12 +56,7 @@ export function ScanTrendCard() {
             />
             <Tooltip
               cursor={{ fill: `${series[0]}14` }}
-              contentStyle={{
-                borderRadius: 12,
-                border: "none",
-                background: tooltipBg,
-                color: "#fff",
-              }}
+              content={<ChartTooltip />}
             />
             <Bar dataKey="scans" name="Lượt quét" radius={[6, 6, 0, 0]}>
               {scanTrend.map((entry, idx) => (
