@@ -6,20 +6,20 @@
   --color-primary: 15 76 129;  
   --color-primary-hover: 13 62 107;  
   --color-accent: 198 40 57;  
-  --color-bg: 243 244 246;
+  --color-bg: 244 246 248;
   --color-surface: 255 255 255;
   --color-text: 26 32 44;  
   --color-border: 226 232 240;  
   --font-size-base: 14px;  
-}
+}  
 .dark {  
   --color-primary: 49 130 206;  
   --color-primary-hover: 66 153 225;  
-  --color-accent: 185 28 28;
+  --color-accent: 248 113 113;  
   --color-bg: 15 23 42;  
   --color-surface: 30 41 59;  
   --color-text: 241 245 249;  
-  --color-border: 71 85 105;
+  --color-border: 30 41 59;  
 }
   
 html, body {  

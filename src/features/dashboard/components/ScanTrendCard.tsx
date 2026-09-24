@@ -1,7 +1,8 @@
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -12,10 +13,15 @@ import { scanTrend } from "@/features/dashboard/data/mock";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
 
 export function ScanTrendCard() {
-  const { primary, axis, track, tooltipBg } = useChartColors();
+  const { series, axis, track, tooltipBg } = useChartColors();
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
+    <div
+      className="relative overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-sm"
+      style={{
+        backgroundImage: `linear-gradient(135deg, ${series[0]}14 0%, ${series[1]}0a 55%, transparent 100%)`,
+      }}
+    >
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-text">Lượt quét mã QR</h2>
@@ -24,16 +30,10 @@ export function ScanTrendCard() {
       </div>
       <div className="h-64 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
+          <BarChart
             data={scanTrend}
             margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
           >
-            <defs>
-              <linearGradient id="scanFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={primary} stopOpacity={0.3} />
-                <stop offset="100%" stopColor={primary} stopOpacity={0} />
-              </linearGradient>
-            </defs>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke={track}
@@ -54,6 +54,7 @@ export function ScanTrendCard() {
               allowDecimals={false}
             />
             <Tooltip
+              cursor={{ fill: `${series[0]}14` }}
               contentStyle={{
                 borderRadius: 12,
                 border: "none",
@@ -61,15 +62,12 @@ export function ScanTrendCard() {
                 color: "#fff",
               }}
             />
-            <Area
-              type="monotone"
-              dataKey="scans"
-              name="Lượt quét"
-              stroke={primary}
-              strokeWidth={2}
-              fill="url(#scanFill)"
-            />
-          </AreaChart>
+            <Bar dataKey="scans" name="Lượt quét" radius={[6, 6, 0, 0]}>
+              {scanTrend.map((entry, idx) => (
+                <Cell key={entry.day} fill={series[idx % series.length]} />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </div>
