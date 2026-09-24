@@ -6,7 +6,7 @@ export function DashboardLayout() {
   return (
     <div className="min-h-screen bg-bg text-text">
       <Topbar />
-      <main className="mx-auto w-full max-w-7xl p-6 print-area">
+      <main className="w-full px-8 py-6 print-area">
         <Outlet />
       </main>
     </div>

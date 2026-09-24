@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 
+import logo from "@/assets/images/logo.png";
 import { useAuthStore } from "@/store/auth.store";
 
 import { UserMenu } from "./UserMenu";
@@ -17,6 +18,9 @@ const navItems: NavItemDef[] = [
   { to: "/dashboard/weapons", label: "Vũ khí" },
   { to: "/dashboard/scanner", label: "Quét mã" },
   { to: "/dashboard/units", label: "Đơn vị", adminOnly: true },
+  { to: "/dashboard/users", label: "Người dùng", adminOnly: true },
+  { to: "/dashboard/roles", label: "Vai trò", adminOnly: true },
+  { to: "/dashboard/audit-log", label: "Nhật ký", adminOnly: true },
 ];
 
 export function Topbar() {
@@ -32,12 +36,14 @@ export function Topbar() {
 
   return (
     <header className="sticky top-0 z-20 bg-bg no-print">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6">
+      <div className="flex h-16 w-full items-center justify-between px-8">
         <div className="flex items-center">
-          <span className="mr-2 flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-lg font-bold text-white">
-            Q
-          </span>
-          <span className="text-base font-bold text-text">QR System</span>
+          <img
+            src={logo}
+            alt="SƯ ĐOÀN 5"
+            className="mr-2 h-12 w-12 rounded-lg object-cover"
+          />
+          <span className="text-xl font-bold text-primary">SƯ ĐOÀN 5</span>
         </div>
 
         <nav className="hidden flex-1 items-center justify-center md:flex">
