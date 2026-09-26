@@ -38,6 +38,21 @@ export function AssetsPage() {
     });
   }, [query, statusFilter]);
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<AssetStatus, number> = {
+      in_use: 0,
+      available: 0,
+      stored: 0,
+      maintenance: 0,
+      damaged: 0,
+      lost: 0,
+    };
+    assetRows.forEach((a) => {
+      counts[a.status] += 1;
+    });
+    return counts;
+  }, []);
+
   const {
     page,
     setPage,
@@ -60,27 +75,31 @@ export function AssetsPage() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between">
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold text-text">Tài sản</h1>
-          <p className="mt-1 text-sm text-text text-opacity-60">
-            Quản lý danh sách tài sản toàn đơn vị.
-          </p>
-        </div>
-        <div className="mb-2 flex items-center">
-          <SearchInput
-            value={query}
-            onChange={handleQuery}
-            placeholder="Tìm theo tên hoặc mã..."
-            className="mr-3 w-64"
-          />
-          <button
-            type="button"
-            className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-          >
-            <FiPlus className="mr-2" size={16} />
-            Thêm tài sản
-          </button>
+      <div className="mb-4 rounded-2xl border border-border bg-surface px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between">
+          <div className="mb-2 mr-4">
+            <h1 className="text-2xl font-bold tracking-tight text-text">
+              Tài sản
+            </h1>
+            <p className="mt-1 text-sm text-text text-opacity-60">
+              Quản lý danh sách tài sản toàn đơn vị.
+            </p>
+          </div>
+          <div className="mb-2 flex items-center">
+            <SearchInput
+              value={query}
+              onChange={handleQuery}
+              placeholder="Tìm theo tên hoặc mã..."
+              className="mr-3 w-64"
+            />
+            <button
+              type="button"
+              className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+            >
+              <FiPlus className="mr-2" size={16} />
+              Thêm tài sản
+            </button>
+          </div>
         </div>
       </div>
 
@@ -88,28 +107,60 @@ export function AssetsPage() {
         <button
           type="button"
           onClick={() => handleStatus("all")}
-          className={`mb-2 mr-2 rounded-full px-3 py-1 text-sm transition-colors ${
+          className={`mb-2 mr-2 inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
             statusFilter === "all"
               ? "bg-primary text-white"
-              : "border border-border text-text hover:border-primary"
+              : "border border-border bg-surface text-text hover:border-primary"
           }`}
         >
           Tất cả
-        </button>
-        {statusMeta.map((s) => (
-          <button
-            key={s.value}
-            type="button"
-            onClick={() => handleStatus(s.value)}
-            className={`mb-2 mr-2 rounded-full px-3 py-1 text-sm transition-colors ${
-              statusFilter === s.value
-                ? "bg-primary text-white"
-                : "border border-border text-text hover:border-primary"
+          <span
+            className={`ml-2 rounded-full px-1.5 py-0.5 text-xs ${
+              statusFilter === "all"
+                ? "bg-white bg-opacity-20 text-white"
+                : "bg-primary bg-opacity-10 text-text text-opacity-70"
             }`}
           >
-            {s.label}
-          </button>
-        ))}
+            {assetRows.length}
+          </span>
+        </button>
+        {statusMeta.map((s) => {
+          const active = statusFilter === s.value;
+          return (
+            <button
+              key={s.value}
+              type="button"
+              onClick={() => handleStatus(s.value)}
+              style={
+                active
+                  ? { backgroundColor: statusColor[s.value], color: "#ffffff" }
+                  : undefined
+              }
+              className={`mb-2 mr-2 inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                active
+                  ? ""
+                  : "border border-border bg-surface text-text hover:border-primary"
+              }`}
+            >
+              <span
+                className="mr-2 inline-block h-2 w-2 rounded-full"
+                style={{
+                  backgroundColor: active ? "#ffffff" : statusColor[s.value],
+                }}
+              />
+              {s.label}
+              <span
+                className={`ml-2 rounded-full px-1.5 py-0.5 text-xs ${
+                  active
+                    ? "bg-white bg-opacity-20 text-white"
+                    : "bg-primary bg-opacity-10 text-text text-opacity-70"
+                }`}
+              >
+                {statusCounts[s.value]}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-surface">

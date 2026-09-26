@@ -45,7 +45,7 @@ export function QrGaugeCard() {
           </PieChart>
         </ResponsiveContainer>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-10 flex flex-col items-center justify-center">
+        <div className="pointer-events-none absolute left-0 right-0 bottom-10 flex flex-col items-center justify-center">
           <span className="text-3xl font-bold text-text">{percent}%</span>
           <span className="text-xs text-text text-opacity-60">
             {assigned}/{total}
