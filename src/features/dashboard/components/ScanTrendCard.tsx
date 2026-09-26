@@ -10,6 +10,7 @@ import {
 
 import { scanTrend } from "@/features/dashboard/data/mock";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
+
 import { ChartTooltip } from "./ChartTooltip";
 
 export function ScanTrendCard() {

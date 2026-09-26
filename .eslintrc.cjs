@@ -1,6 +1,12 @@
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
   root: true,
+  ignorePatterns: [
+    "dist",
+    "vite.config.js",
+    "vite.config.d.ts",
+    "*.tsbuildinfo",
+  ],
   env: { browser: true, es2021: true, node: true },
   parser: "@typescript-eslint/parser",
   parserOptions: {
