@@ -31,12 +31,12 @@ export interface ScanPoint {
 }
 
 export const scanTrend: ScanPoint[] = [
-  { day: "T2", scans: 82 },
-  { day: "T3", scans: 134 },
+  { day: "T2", scans: 100 },
+  { day: "T3", scans: 241 },
   { day: "T4", scans: 96 },
-  { day: "T5", scans: 158 },
-  { day: "T6", scans: 121 },
-  { day: "T7", scans: 64 },
+  { day: "T5", scans: 122 },
+  { day: "T6", scans: 67 },
+  { day: "T7", scans: 170 },
   { day: "CN", scans: 38 },
 ];
 

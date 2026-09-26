@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router-dom";
 
 import { router } from "@/routes";
 
+import "@/assets/fonts/inter.css";
 import "@/index.css";
 
 const queryClient = new QueryClient({

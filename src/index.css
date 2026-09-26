@@ -23,6 +23,7 @@
 }
   
 html, body {  
+  font-family: InterVariable, Inter, system-ui, sans-serif;  
   background-color: rgb(var(--color-bg));  
   color: rgb(var(--color-text));  
 }
