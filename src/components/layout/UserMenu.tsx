@@ -2,20 +2,20 @@ import { useState } from "react";
 import { FiChevronDown, FiLogOut, FiMoon, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
+import { useLogout } from "@/features/auth/auth.hooks";
 import { useAuthStore } from "@/store/auth.store";
 import { useThemeStore } from "@/store/theme.store";
 
 export function UserMenu() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+  const { mutate: logoutMutate } = useLogout();
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggle);
   const [open, setOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    logoutMutate(undefined, { onSettled: () => navigate("/login") });
   };
 
   const isDark = theme === "dark";

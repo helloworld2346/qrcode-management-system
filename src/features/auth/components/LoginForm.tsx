@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/Button";
-import { useAuthStore } from "@/store/auth.store";
+import { useLogin } from "@/features/auth/auth.hooks";
 
 const loginSchema = z.object({
   username: z.string().min(1),
@@ -18,21 +18,20 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const navigate = useNavigate();
-  const login = useAuthStore((s) => s.login);
+  const { mutate, isPending, error } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = (values: LoginValues) => {
-    login(
-      { id: "1", username: values.username, unitId: "unit-01", role: "admin" },
-      "mock-token",
+    mutate(
+      { userName: values.username, password: values.password },
+      { onSuccess: () => navigate("/dashboard") },
     );
-    navigate("/dashboard");
   };
 
   const inputClass =
@@ -91,12 +90,18 @@ export function LoginForm() {
         <div className="mb-7" />
       )}
 
+      {error ? (
+        <p className="mb-4 pl-8 text-sm text-accent">
+          Tên đăng nhập hoặc mật khẩu không đúng.
+        </p>
+      ) : null}
+
       <Button
         type="submit"
         className="group flex w-full items-center justify-center rounded-full bg-gradient-to-r from-primary to-primary-hover py-4 text-lg font-semibold text-white shadow-lg transition-transform hover:-translate-y-0.5 disabled:translate-y-0"
-        disabled={isSubmitting}
+        disabled={isPending}
       >
-        {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+        {isPending ? "Đang đăng nhập..." : "Đăng nhập"}
         <FiArrowRight
           className="ml-2 transition-transform group-hover:translate-x-1"
           size={20}
