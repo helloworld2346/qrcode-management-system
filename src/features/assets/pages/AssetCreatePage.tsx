@@ -18,6 +18,7 @@ import {
   type AssetStatus,
 } from "@/features/assets/data/mock";
 import { logger } from "@/utils/logger";
+import { DatePicker } from "@/components/ui/DatePicker";
 
 const statusColor: Record<AssetStatus, string> = {
   in_use: "#0ea5e9",
@@ -118,10 +119,17 @@ export function AssetCreatePage() {
                   error={errors.issuedDate?.message}
                   className="mb-4 w-full md:w-1/2 md:pl-2"
                 >
-                  <Input
-                    type="date"
-                    {...register("issuedDate")}
-                    invalid={!!errors.issuedDate}
+                  <Controller
+                    name="issuedDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        invalid={!!errors.issuedDate}
+                      />
+                    )}
                   />
                 </FormField>
 
