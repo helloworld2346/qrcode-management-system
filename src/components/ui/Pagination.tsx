@@ -1,5 +1,7 @@
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
+import { Select } from "@/components/ui/Select";
+
 interface Props {
   page: number;
   totalPages: number;
@@ -28,31 +30,22 @@ export function Pagination({
   page,
   totalPages,
   pageSize,
-  totalItems,
   onPageChange,
   onPageSizeChange,
-  pageSizeOptions = [8, 16, 24, 50],
+  pageSizeOptions = [10, 20, 30, 40, 50],
 }: Props) {
-  const from = totalItems === 0 ? 0 : (page - 1) * pageSize + 1;
-  const to = Math.min(totalItems, page * pageSize);
-
   return (
     <div className="flex flex-wrap items-center justify-between">
       <div className="mb-2 flex items-center text-sm text-text text-opacity-60">
-        <span className="mr-3">
-          {from}–{to} / {totalItems}
-        </span>
-        <select
+        <span className="mr-3">Số bản ghi trên trang</span>
+        <Select
           value={pageSize}
-          onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="rounded-lg border border-border bg-surface px-2 py-1 text-sm text-text focus:border-primary focus:outline-none"
-        >
-          {pageSizeOptions.map((size) => (
-            <option key={size} value={size}>
-              {size}/trang
-            </option>
-          ))}
-        </select>
+          onChange={onPageSizeChange}
+          options={pageSizeOptions.map((size) => ({
+            value: size,
+            label: `${size}`,
+          }))}
+        />
       </div>
 
       <div className="mb-2 flex items-center">

@@ -46,7 +46,7 @@ export function AssetsPage() {
     totalPages,
     pageItems,
     totalItems,
-  } = usePagination(filtered, 8);
+  } = usePagination(filtered, 10);
 
   const handleQuery = (v: string) => {
     setQuery(v);
@@ -116,7 +116,7 @@ export function AssetsPage() {
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-border text-xs uppercase text-text text-opacity-50">
-              <th className="px-5 py-3 font-semibold">STT</th>
+              <th className="px-5 py-3 font-semibold">#</th>
               <th className="px-5 py-3 font-semibold">Mã</th>
               <th className="px-5 py-3 font-semibold">Tên tài sản</th>
               <th className="px-5 py-3 font-semibold">Đơn vị</th>
