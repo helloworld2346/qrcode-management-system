@@ -13,6 +13,7 @@ import { AuthLayout } from "@/layouts/AuthLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { RouteError } from "@/routes/RouteError";
+import { AssetCreatePage } from "@/features/assets/pages/AssetCreatePage";  
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/dashboard" replace /> },
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DashboardPage /> },
       { path: "assets", element: <AssetsPage /> },
+      { path: "assets/create", element: <AssetCreatePage /> },
       { path: "weapons", element: <WeaponsPage /> },
       { path: "scanner", element: <ScannerPage /> },
       {

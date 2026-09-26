@@ -9,6 +9,7 @@ import {
   type AssetStatus,
 } from "@/features/assets/data/mock";
 import { usePagination } from "@/hooks/usePagination";
+import { Link } from "react-router-dom";
 
 const statusColor: Record<AssetStatus, string> = {
   in_use: "#0ea5e9",
@@ -92,13 +93,13 @@ export function AssetsPage() {
               placeholder="Tìm theo tên hoặc mã..."
               className="mr-3 w-64"
             />
-            <button
-              type="button"
+            <Link
+              to="/dashboard/assets/create"
               className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
             >
               <FiPlus className="mr-2" size={16} />
               Thêm tài sản
-            </button>
+            </Link>
           </div>
         </div>
       </div>
