@@ -29,11 +29,20 @@ html, body {
 }
   
 @media print {  
-  .no-print {  
-    display: none;  
+  body * {  
+    visibility: hidden;  
+  }  
+  .print-area,  
+  .print-area * {  
+    visibility: visible;  
   }  
   .print-area {  
-    display: block;  
+    position: absolute;  
+    top: 0;  
+    left: 0;  
+  }  
+  .no-print {  
+    display: none;  
   }  
 }
 

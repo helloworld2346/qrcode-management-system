@@ -221,27 +221,27 @@ export function AssetsPage() {
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center justify-end">
-                      <button
-                        type="button"
+                      <Link
+                        to={`/dashboard/assets/${a.code}`}
                         aria-label="Xem"
                         className="mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
                       >
                         <FiMaximize2 size={15} />
-                      </button>
-                      <button
-                        type="button"
+                      </Link>
+                      <Link
+                        to={`/dashboard/assets/${a.code}/print`}
                         aria-label="In QR"
                         className="mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
                       >
                         <FiPrinter size={15} />
-                      </button>
-                      <button
-                        type="button"
+                      </Link>
+                      <Link
+                        to={`/dashboard/assets/${a.code}/edit`}
                         aria-label="Sửa"
                         className="flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
                       >
                         <FiEdit2 size={15} />
-                      </button>
+                      </Link>
                     </div>
                   </td>
                 </tr>

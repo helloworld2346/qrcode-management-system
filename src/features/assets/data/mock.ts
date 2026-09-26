@@ -310,3 +310,15 @@ export const assetRows: AssetRow[] = [
     issuedDate: "21/09/2023",
   },
 ];
+
+export const statusColor: Record<AssetStatus, string> = {
+  in_use: "#0ea5e9",
+  available: "#16a34a",
+  stored: "#0f4c81",
+  maintenance: "#d97706",
+  damaged: "#c62839",
+  lost: "#64748b",
+};
+
+export const findAssetByCode = (code: string) =>
+  assetRows.find((a) => a.code === code);

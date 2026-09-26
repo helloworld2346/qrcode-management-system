@@ -14,6 +14,9 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { RouteError } from "@/routes/RouteError";
 import { AssetCreatePage } from "@/features/assets/pages/AssetCreatePage";  
+import { AssetDetailPage } from "@/features/assets/pages/AssetDetailPage";
+import { AssetEditPage } from "@/features/assets/pages/AssetEditPage";
+import { AssetPrintPage } from "@/features/assets/pages/AssetPrintPage";  
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/dashboard" replace /> },
@@ -34,6 +37,9 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardPage /> },
       { path: "assets", element: <AssetsPage /> },
       { path: "assets/create", element: <AssetCreatePage /> },
+      { path: "assets/:code", element: <AssetDetailPage /> },
+      { path: "assets/:code/edit", element: <AssetEditPage /> },
+      { path: "assets/:code/print", element: <AssetPrintPage /> },
       { path: "weapons", element: <WeaponsPage /> },
       { path: "scanner", element: <ScannerPage /> },
       {
