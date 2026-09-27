@@ -1,7 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { authApi } from "@/features/auth/auth.api";
+import type { AuthResult } from "@/features/auth/auth.types";
 import { useAuthStore, type Role } from "@/store/auth.store";
+import type { ApiResponse } from "@/types/api.types";
 import { logger } from "@/utils/logger";
 
 interface JwtPayload {
@@ -35,6 +37,10 @@ function scopeToRole(scope?: string): Role {
   return scope && scope.toLowerCase().includes("admin") ? "admin" : "unit";
 }
 
+function pickResult(res: ApiResponse<AuthResult>): AuthResult | undefined {
+  return res.result ?? (res as { Result?: AuthResult }).Result;
+}
+
 const useMock = import.meta.env.VITE_USE_MOCK === "true";
 
 export function useLogin() {
@@ -43,16 +49,14 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (payload: { userName: string; password: string }) => {
       if (useMock) {
-        return {
-          token: "mock-token",
-          authenticated: true,
-        };
+        return { token: "mock-token", authenticated: true } as AuthResult;
       }
       const res = await authApi.login(payload);
-      if (!res.success || !res.result?.token) {
+      const result = pickResult(res);
+      if (!res.success || !result?.token) {
         throw new Error(res.message || "Đăng nhập thất bại");
       }
-      return res.result;
+      return result;
     },
     onSuccess: (result) => {
       const token = result.token;
