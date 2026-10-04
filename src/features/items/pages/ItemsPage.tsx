@@ -6,7 +6,9 @@ import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { useAttributes } from "@/features/attributes/attributes.hooks";
 import { useCategories } from "@/features/categories/categories.hooks";
+import { AttributeValueField } from "@/features/items/components/AttributeValueField";
 import {
   useCreateItem,
   useDeleteItem,
@@ -19,6 +21,7 @@ import { usePagination } from "@/hooks/usePagination";
 export function ItemsPage() {
   const { data: items, isLoading, isError, error, refetch } = useItems();
   const { data: categories } = useCategories();
+  const { data: attributes } = useAttributes();
   const createItem = useCreateItem();
   const deleteItem = useDeleteItem();
   const itemQr = useItemQr();
@@ -44,6 +47,18 @@ export function ItemsPage() {
       })),
     [categories],
   );
+
+  /** Map attributeId -> master Attribute để lấy dataType/options */
+  const masterById = useMemo(() => {
+    const map: Record<
+      string,
+      typeof attributes extends (infer T)[] | undefined ? T : never
+    > = {};
+    (attributes ?? []).forEach((a) => {
+      map[a.idAttribute] = a;
+    });
+    return map;
+  }, [attributes]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -183,15 +198,16 @@ export function ItemsPage() {
                 className="mb-3 w-full px-2 md:w-1/3"
               >
                 <FormField label={a.attributeName} required={a.required}>
-                  <Input
-                    value={attrValues[a.attributeId] ?? ""}
-                    onChange={(e) =>
+                  <AttributeValueField
+                    attribute={a}
+                    master={masterById[a.attributeId]}
+                    value={attrValues[a.attributeId] ?? a.defaultValue ?? ""}
+                    onChange={(v) =>
                       setAttrValues((prev) => ({
                         ...prev,
-                        [a.attributeId]: e.target.value,
+                        [a.attributeId]: v,
                       }))
                     }
-                    placeholder={a.defaultValue || a.attributeName}
                   />
                 </FormField>
               </div>
