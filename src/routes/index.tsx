@@ -11,6 +11,7 @@ import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { CategoryDetailPage } from "@/features/categories/pages/CategoryDetailPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
+import { ItemsPage } from "@/features/items/pages/ItemsPage";
 import { RolesPage } from "@/features/roles/pages/RolesPage";
 import { ScannerPage } from "@/features/scanner/pages/ScannerPage";
 import { UnitsPage } from "@/features/units/pages/UnitsPage";
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
       { path: "assets/:code/print", element: <AssetPrintPage /> },
       { path: "weapons", element: <WeaponsPage /> },
       { path: "scanner", element: <ScannerPage /> },
+      { path: "items", element: <ItemsPage /> },
       {
         path: "categories",
         element: (

@@ -19,6 +19,7 @@ const navItems: NavItemDef[] = [
   { to: "/dashboard/assets", label: "Tài sản" },
   { to: "/dashboard/weapons", label: "Vũ khí" },
   { to: "/dashboard/scanner", label: "Quét mã" },
+  { to: "/dashboard/items", label: "Đồ vật" },
   { to: "/dashboard/categories", label: "Danh mục", adminOnly: true },
   { to: "/dashboard/attributes", label: "Thuộc tính", adminOnly: true },
   { to: "/dashboard/units", label: "Đơn vị", adminOnly: true },

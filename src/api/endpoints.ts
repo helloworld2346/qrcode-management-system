@@ -18,4 +18,14 @@ export const endpoints = {
     create: "/attributes",
     remove: (id: string) => `/attributes/${id}`,
   },
+  items: {
+    list: "/items",
+    create: "/items",
+    detail: (id: string) => `/items/${id}`,
+    update: (id: string) => `/items/${id}`,
+    updateStatus: (id: string) => `/items/${id}/status`,
+    remove: (id: string) => `/items/${id}`,
+    qr: (id: string) => `/items/${id}/qr`,
+    resolve: (code: string) => `/items/resolve/${code}`,
+  },
 };
