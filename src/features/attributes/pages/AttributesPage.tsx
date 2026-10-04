@@ -12,8 +12,9 @@ import {
 } from "@/features/attributes/attributes.hooks";
 import {
   DATA_TYPES,
+  DEFAULT_VALIDATION_REGEX,
+  genAttributeCode,
   OPTION_TYPES,
-  REGEX_TYPES,
   type DataType,
 } from "@/features/attributes/attributes.types";
 import { logger } from "@/utils/logger";
@@ -21,11 +22,9 @@ import { logger } from "@/utils/logger";
 const dataTypeOptions = DATA_TYPES.map((t) => ({ value: t, label: t }));
 
 export function AttributesPage() {
-  const [code, setCode] = useState("");
   const [attributeName, setAttributeName] = useState("");
   const [dataType, setDataType] = useState<DataType>("TEXT");
   const [description, setDescription] = useState("");
-  const [validationRegex, setValidationRegex] = useState("");
   const [optionsInput, setOptionsInput] = useState("");
   const [formError, setFormError] = useState("");
 
@@ -34,7 +33,6 @@ export function AttributesPage() {
   const deleteAttribute = useDeleteAttribute();
 
   const needsOptions = OPTION_TYPES.includes(dataType);
-  const needsRegex = REGEX_TYPES.includes(dataType);
 
   const parsedOptions = useMemo(() => {
     if (!needsOptions) return null;
@@ -47,10 +45,9 @@ export function AttributesPage() {
 
   const handleCreate = () => {
     setFormError("");
-    const trimmedCode = code.trim();
     const trimmedName = attributeName.trim();
-    if (!trimmedCode || !trimmedName) {
-      setFormError("Vui lòng nhập mã và tên thuộc tính.");
+    if (!trimmedName) {
+      setFormError("Vui lòng nhập tên thuộc tính.");
       return;
     }
     if (needsOptions && !parsedOptions) {
@@ -60,21 +57,18 @@ export function AttributesPage() {
 
     createAttribute.mutate(
       {
-        code: trimmedCode,
+        code: genAttributeCode(trimmedName),
         attributeName: trimmedName,
         dataType,
         description: description.trim(),
-        validationRegex:
-          needsRegex && validationRegex.trim() ? validationRegex.trim() : null,
+        validationRegex: DEFAULT_VALIDATION_REGEX[dataType],
         options: parsedOptions ? JSON.stringify(parsedOptions) : null,
       },
       {
         onSuccess: () => {
-          setCode("");
           setAttributeName("");
           setDataType("TEXT");
           setDescription("");
-          setValidationRegex("");
           setOptionsInput("");
         },
       },
@@ -132,16 +126,7 @@ export function AttributesPage() {
           Thêm thuộc tính
         </h2>
         <div className="flex flex-wrap">
-          <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2 lg:w-1/4">
-            <FormField label="Mã thuộc tính" required>
-              <Input
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="VD: CHAT_LIEU"
-              />
-            </FormField>
-          </div>
-          <div className="mb-3 w-full pl-0 sm:w-1/2 sm:pl-2 lg:w-1/4">
+          <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2 lg:w-1/3">
             <FormField label="Tên thuộc tính" required>
               <Input
                 value={attributeName}
@@ -150,7 +135,7 @@ export function AttributesPage() {
               />
             </FormField>
           </div>
-          <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2 lg:w-1/4">
+          <div className="mb-3 w-full pl-0 sm:w-1/2 sm:pl-2 lg:w-1/3">
             <FormField label="Kiểu dữ liệu" required>
               <FormSelect
                 value={dataType}
@@ -159,7 +144,7 @@ export function AttributesPage() {
               />
             </FormField>
           </div>
-          <div className="mb-3 w-full pl-0 sm:w-1/2 sm:pl-2 lg:w-1/4">
+          <div className="mb-3 w-full pr-0 lg:w-1/3">
             <FormField label="Mô tả">
               <Input
                 value={description}
@@ -170,24 +155,12 @@ export function AttributesPage() {
           </div>
 
           {needsOptions ? (
-            <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2">
+            <div className="mb-3 w-full">
               <FormField label="Options (phân tách bởi dấu phẩy)" required>
                 <Input
                   value={optionsInput}
                   onChange={(e) => setOptionsInput(e.target.value)}
                   placeholder="Gỗ, Nhựa, Kim loại, Vải"
-                />
-              </FormField>
-            </div>
-          ) : null}
-
-          {needsRegex ? (
-            <div className="mb-3 w-full pl-0 sm:w-1/2 sm:pl-2">
-              <FormField label="Validation regex">
-                <Input
-                  value={validationRegex}
-                  onChange={(e) => setValidationRegex(e.target.value)}
-                  placeholder="VD: ^\\d+$"
                 />
               </FormField>
             </div>
