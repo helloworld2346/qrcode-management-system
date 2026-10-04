@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { FiEdit2, FiMaximize2, FiPlus, FiPrinter } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -9,7 +10,6 @@ import {
   type AssetStatus,
 } from "@/features/assets/data/mock";
 import { usePagination } from "@/hooks/usePagination";
-import { Link } from "react-router-dom";
 
 const statusColor: Record<AssetStatus, string> = {
   in_use: "#0ea5e9",

@@ -1,8 +1,12 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
+import { AssetCreatePage } from "@/features/assets/pages/AssetCreatePage";
+import { AssetDetailPage } from "@/features/assets/pages/AssetDetailPage";
+import { AssetEditPage } from "@/features/assets/pages/AssetEditPage";
+import { AssetPrintPage } from "@/features/assets/pages/AssetPrintPage";
 import { AssetsPage } from "@/features/assets/pages/AssetsPage";
 import { AuditLogPage } from "@/features/audit-log/pages/AuditLogPage";
-import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { LoginPage } from "@/features/auth/pages/LoginPage";  
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { RolesPage } from "@/features/roles/pages/RolesPage";
 import { ScannerPage } from "@/features/scanner/pages/ScannerPage";
@@ -13,10 +17,6 @@ import { AuthLayout } from "@/layouts/AuthLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 import { RouteError } from "@/routes/RouteError";
-import { AssetCreatePage } from "@/features/assets/pages/AssetCreatePage";  
-import { AssetDetailPage } from "@/features/assets/pages/AssetDetailPage";
-import { AssetEditPage } from "@/features/assets/pages/AssetEditPage";
-import { AssetPrintPage } from "@/features/assets/pages/AssetPrintPage";  
 
 export const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/dashboard" replace /> },

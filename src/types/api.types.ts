@@ -4,3 +4,7 @@ export interface ApiResponse<T> {
   message: string;
   result: T;
 }
+
+export function pickResult<T>(res: ApiResponse<T>): T | undefined {
+  return res.result ?? (res as { Result?: T }).Result;
+}

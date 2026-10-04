@@ -1,8 +1,8 @@
 import { FiArrowLeft } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 
-import { AssetForm } from "@/features/assets/components/AssetForm";
 import { type AssetFormValues } from "@/features/assets/assets.schema";
+import { AssetForm } from "@/features/assets/components/AssetForm";
 import { logger } from "@/utils/logger";
 
 export function AssetCreatePage() {
