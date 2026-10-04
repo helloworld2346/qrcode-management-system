@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -29,6 +30,12 @@ export function CategoriesPage() {
         },
       },
     );
+  };
+
+  const handleDelete = (id: string, categoryName: string) => {
+    if (window.confirm(`Xóa danh mục "${categoryName}"?`)) {
+      deleteCategory.mutate(id);
+    }
   };
 
   return (
@@ -132,15 +139,26 @@ export function CategoriesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      aria-label="Xóa"
-                      disabled={deleteCategory.isPending}
-                      onClick={() => deleteCategory.mutate(c.idCategory)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
-                    >
-                      <FiTrash2 size={15} />
-                    </button>
+                    <div className="flex items-center">
+                      <Link
+                        to={`/dashboard/categories/${c.idCategory}`}
+                        aria-label="Xem"
+                        className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
+                      >
+                        <FiEye size={15} />
+                      </Link>
+                      <button
+                        type="button"
+                        aria-label="Xóa"
+                        disabled={deleteCategory.isPending}
+                        onClick={() =>
+                          handleDelete(c.idCategory, c.categoryName)
+                        }
+                        className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

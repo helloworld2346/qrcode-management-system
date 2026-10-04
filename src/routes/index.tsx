@@ -5,9 +5,11 @@ import { AssetDetailPage } from "@/features/assets/pages/AssetDetailPage";
 import { AssetEditPage } from "@/features/assets/pages/AssetEditPage";
 import { AssetPrintPage } from "@/features/assets/pages/AssetPrintPage";
 import { AssetsPage } from "@/features/assets/pages/AssetsPage";
+import { AttributesPage } from "@/features/attributes/pages/AttributesPage";
 import { AuditLogPage } from "@/features/audit-log/pages/AuditLogPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
+import { CategoryDetailPage } from "@/features/categories/pages/CategoryDetailPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { RolesPage } from "@/features/roles/pages/RolesPage";
 import { ScannerPage } from "@/features/scanner/pages/ScannerPage";
@@ -41,6 +43,8 @@ export const router = createBrowserRouter([
       { path: "assets/:code", element: <AssetDetailPage /> },
       { path: "assets/:code/edit", element: <AssetEditPage /> },
       { path: "assets/:code/print", element: <AssetPrintPage /> },
+      { path: "weapons", element: <WeaponsPage /> },
+      { path: "scanner", element: <ScannerPage /> },
       {
         path: "categories",
         element: (
@@ -49,8 +53,22 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      { path: "weapons", element: <WeaponsPage /> },
-      { path: "scanner", element: <ScannerPage /> },
+      {
+        path: "categories/:id",
+        element: (
+          <ProtectedRoute allow="admin">
+            <CategoryDetailPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "attributes",
+        element: (
+          <ProtectedRoute allow="admin">
+            <AttributesPage />
+          </ProtectedRoute>
+        ),
+      },
       {
         path: "units",
         element: (

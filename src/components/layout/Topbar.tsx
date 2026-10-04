@@ -20,6 +20,7 @@ const navItems: NavItemDef[] = [
   { to: "/dashboard/weapons", label: "Vũ khí" },
   { to: "/dashboard/scanner", label: "Quét mã" },
   { to: "/dashboard/categories", label: "Danh mục", adminOnly: true },
+  { to: "/dashboard/attributes", label: "Thuộc tính", adminOnly: true },
   { to: "/dashboard/units", label: "Đơn vị", adminOnly: true },
   { to: "/dashboard/users", label: "Người dùng", adminOnly: true },
   { to: "/dashboard/roles", label: "Vai trò", adminOnly: true },
