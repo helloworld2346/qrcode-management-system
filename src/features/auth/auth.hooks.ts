@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { authApi } from "@/features/auth/auth.api";
 import type { AuthResult } from "@/features/auth/auth.types";
 import { useAuthStore, type Role } from "@/store/auth.store";
-import type { ApiResponse } from "@/types/api.types";
+import { pickResult } from "@/types/api.types";
 import { logger } from "@/utils/logger";
 
 interface JwtPayload {
@@ -35,10 +35,6 @@ function decodeToken(token: string): JwtPayload | null {
 
 function scopeToRole(scope?: string): Role {
   return scope && scope.toLowerCase().includes("admin") ? "admin" : "unit";
-}
-
-function pickResult(res: ApiResponse<AuthResult>): AuthResult | undefined {
-  return res.result ?? (res as { Result?: AuthResult }).Result;
 }
 
 const useMock = import.meta.env.VITE_USE_MOCK === "true";

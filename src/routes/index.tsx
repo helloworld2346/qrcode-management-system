@@ -6,7 +6,8 @@ import { AssetEditPage } from "@/features/assets/pages/AssetEditPage";
 import { AssetPrintPage } from "@/features/assets/pages/AssetPrintPage";
 import { AssetsPage } from "@/features/assets/pages/AssetsPage";
 import { AuditLogPage } from "@/features/audit-log/pages/AuditLogPage";
-import { LoginPage } from "@/features/auth/pages/LoginPage";  
+import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { RolesPage } from "@/features/roles/pages/RolesPage";
 import { ScannerPage } from "@/features/scanner/pages/ScannerPage";
@@ -40,6 +41,14 @@ export const router = createBrowserRouter([
       { path: "assets/:code", element: <AssetDetailPage /> },
       { path: "assets/:code/edit", element: <AssetEditPage /> },
       { path: "assets/:code/print", element: <AssetPrintPage /> },
+      {
+        path: "categories",
+        element: (
+          <ProtectedRoute allow="admin">
+            <CategoriesPage />
+          </ProtectedRoute>
+        ),
+      },
       { path: "weapons", element: <WeaponsPage /> },
       { path: "scanner", element: <ScannerPage /> },
       {

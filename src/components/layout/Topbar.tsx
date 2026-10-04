@@ -19,6 +19,7 @@ const navItems: NavItemDef[] = [
   { to: "/dashboard/assets", label: "Tài sản" },
   { to: "/dashboard/weapons", label: "Vũ khí" },
   { to: "/dashboard/scanner", label: "Quét mã" },
+  { to: "/dashboard/categories", label: "Danh mục", adminOnly: true },
   { to: "/dashboard/units", label: "Đơn vị", adminOnly: true },
   { to: "/dashboard/users", label: "Người dùng", adminOnly: true },
   { to: "/dashboard/roles", label: "Vai trò", adminOnly: true },
@@ -50,7 +51,7 @@ export function Topbar() {
     ].join(" ");
 
   return (
-    <header className="relative sticky top-0 z-20 bg-bg no-print">
+    <header className="sticky top-0 z-20 bg-bg no-print">
       <div className="flex h-16 w-full items-center justify-between px-4 md:px-8">
         <div className="flex flex-shrink-0 items-center">
           <img

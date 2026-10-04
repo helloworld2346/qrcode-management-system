@@ -79,10 +79,10 @@ export function useAddCategoryAttribute() {
       }
       return result;
     },
-    onSuccess: (category: Category) => {
+    onSuccess: (_category: Category, variables) => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.all });
       queryClient.invalidateQueries({
-        queryKey: categoryKeys.detail(category.idCategory),
+        queryKey: categoryKeys.detail(variables.id),
       });
     },
     onError: (err) => {
