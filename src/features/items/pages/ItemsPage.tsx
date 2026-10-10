@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { FiPlus, FiTrash2, FiX, FiPrinter } from "react-icons/fi";
+import { FiPlus, FiPrinter, FiTrash2, FiX } from "react-icons/fi";
 
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useAttributes } from "@/features/attributes/attributes.hooks";
+import type { Attribute } from "@/features/attributes/attributes.types";
 import { useCategories } from "@/features/categories/categories.hooks";
 import { AttributeValueField } from "@/features/items/components/AttributeValueField";
 import {
@@ -48,12 +49,8 @@ export function ItemsPage() {
     [categories],
   );
 
-  /** Map attributeId -> master Attribute để lấy dataType/options */
   const masterById = useMemo(() => {
-    const map: Record<
-      string,
-      typeof attributes extends (infer T)[] | undefined ? T : never
-    > = {};
+    const map: Record<string, Attribute> = {};
     (attributes ?? []).forEach((a) => {
       map[a.idAttribute] = a;
     });
@@ -100,7 +97,7 @@ export function ItemsPage() {
       return;
     }
     const missing = (selectedCategory?.attributes ?? []).find(
-      (a) => a.required && !attrValues[a.attributeId]?.trim(),
+      (a) => a.required && !attrValues[a.code]?.trim(),
     );
     if (missing) {
       setFormError(`Vui lòng nhập "${missing.attributeName}"`);
@@ -201,11 +198,11 @@ export function ItemsPage() {
                   <AttributeValueField
                     attribute={a}
                     master={masterById[a.attributeId]}
-                    value={attrValues[a.attributeId] ?? a.defaultValue ?? ""}
+                    value={attrValues[a.code] ?? a.defaultValue ?? ""}
                     onChange={(v) =>
                       setAttrValues((prev) => ({
                         ...prev,
-                        [a.attributeId]: v,
+                        [a.code]: v,
                       }))
                     }
                   />

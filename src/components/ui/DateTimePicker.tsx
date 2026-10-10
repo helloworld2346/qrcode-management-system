@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FiCalendar, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiCalendar } from "react-icons/fi";
+
+import { FormSelect } from "@/components/ui/FormSelect";
 
 interface Props {
-  value: string; // "YYYY-MM-DDTHH:mm"
+  value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
   placeholder?: string;
@@ -11,22 +13,28 @@ interface Props {
 }
 
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
-const MONTHS = [
-  "Tháng 1",
-  "Tháng 2",
-  "Tháng 3",
-  "Tháng 4",
-  "Tháng 5",
-  "Tháng 6",
-  "Tháng 7",
-  "Tháng 8",
-  "Tháng 9",
-  "Tháng 10",
-  "Tháng 11",
-  "Tháng 12",
-];
 
 const pad = (n: number) => String(n).padStart(2, "0");
+
+const DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/;
+
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, h) => ({
+  value: pad(h),
+  label: pad(h),
+}));
+const MINUTE_OPTIONS = Array.from({ length: 60 }, (_, m) => ({
+  value: pad(m),
+  label: pad(m),
+}));
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+  value: String(i),
+  label: `Tháng ${i + 1}`,
+}));
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 121 }, (_, i) => {
+  const y = 1950 + i;
+  return { value: String(y), label: String(y) };
+});
 
 export function DateTimePicker({
   value,
@@ -40,7 +48,7 @@ export function DateTimePicker({
   const ref = useRef<HTMLDivElement>(null);
 
   const selected = useMemo(() => {
-    if (!value) return null;
+    if (!value || !DATETIME_RE.test(value)) return null;
     const [datePart, timePart = "00:00"] = value.split("T");
     const [y, m, d] = datePart.split("-").map(Number);
     const [hh, mm] = timePart.split(":").map(Number);
@@ -48,12 +56,15 @@ export function DateTimePicker({
   }, [value]);
 
   const [view, setView] = useState(() => {
-    const base = selected ?? {
-      y: new Date().getFullYear(),
-      m: new Date().getMonth(),
-    };
+    const base = selected ?? { y: CURRENT_YEAR, m: new Date().getMonth() };
     return { y: base.y, m: base.m };
   });
+
+  useEffect(() => {
+    if (selected) {
+      setView({ y: selected.y, m: selected.m });
+    }
+  }, [selected]);
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
@@ -84,24 +95,18 @@ export function DateTimePicker({
   const isSelected = (d: number) =>
     selected?.y === view.y && selected?.m === view.m && selected?.d === d;
 
-  const prevMonth = () =>
-    setView((v) =>
-      v.m === 0 ? { y: v.y - 1, m: 11 } : { y: v.y, m: v.m - 1 },
-    );
-  const nextMonth = () =>
-    setView((v) =>
-      v.m === 11 ? { y: v.y + 1, m: 0 } : { y: v.y, m: v.m + 1 },
-    );
-
   const emit = (d: number, hh: number, mm: number) => {
     onChange(`${view.y}-${pad(view.m + 1)}-${pad(d)}T${pad(hh)}:${pad(mm)}`);
   };
 
   const formatDisplay = (v: string) => {
+    if (!DATETIME_RE.test(v)) return placeholder;
     const [datePart, timePart = "00:00"] = v.split("T");
     const [y, m, d] = datePart.split("-");
     return `${d}/${m}/${y} ${timePart}`;
   };
+
+  const hasValue = DATETIME_RE.test(value);
 
   return (
     <div ref={ref} className={`relative ${className}`}>
@@ -112,36 +117,31 @@ export function DateTimePicker({
           invalid ? "border-accent" : "border-border"
         }`}
       >
-        <span className={value ? "text-text" : "text-text text-opacity-40"}>
-          {value ? formatDisplay(value) : placeholder}
+        <span className={hasValue ? "text-text" : "text-text text-opacity-40"}>
+          {hasValue ? formatDisplay(value) : placeholder}
         </span>
         <FiCalendar size={16} className="text-text text-opacity-50" />
       </button>
 
       {open ? (
-        <div className="absolute left-0 top-full z-30 mt-1 w-64 rounded-lg border border-border bg-surface p-3 shadow-lg">
-          {/* Điều hướng tháng */}
-          <div className="mb-2 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={prevMonth}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
-            >
-              <FiChevronLeft size={16} />
-            </button>
-            <span className="text-sm font-semibold text-text">
-              {MONTHS[view.m]} {view.y}
-            </span>
-            <button
-              type="button"
-              onClick={nextMonth}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
-            >
-              <FiChevronRight size={16} />
-            </button>
+        <div className="absolute left-0 top-full z-30 mt-1 w-72 rounded-lg border border-border bg-surface p-3 shadow-lg">
+          <div className="mb-2 flex items-center">
+            <div className="w-1/2 pr-1">
+              <FormSelect
+                value={String(view.m)}
+                options={MONTH_OPTIONS}
+                onChange={(v) => setView((prev) => ({ ...prev, m: Number(v) }))}
+              />
+            </div>
+            <div className="w-1/2 pl-1">
+              <FormSelect
+                value={String(view.y)}
+                options={YEAR_OPTIONS}
+                onChange={(v) => setView((prev) => ({ ...prev, y: Number(v) }))}
+              />
+            </div>
           </div>
 
-          {/* Tiêu đề thứ */}
           <div className="grid grid-cols-7">
             {WEEKDAYS.map((w) => (
               <div
@@ -153,7 +153,6 @@ export function DateTimePicker({
             ))}
           </div>
 
-          {/* Các ngày */}
           <div className="grid grid-cols-7">
             {cells.map((d, i) =>
               d === null ? (
@@ -162,9 +161,7 @@ export function DateTimePicker({
                 <button
                   key={d}
                   type="button"
-                  onClick={() => {
-                    emit(d, selected?.hh ?? 0, selected?.mm ?? 0);
-                  }}
+                  onClick={() => emit(d, selected?.hh ?? 0, selected?.mm ?? 0)}
                   className={`flex h-8 items-center justify-center rounded-lg text-sm transition-colors ${
                     isSelected(d)
                       ? "bg-primary font-medium text-white"
@@ -179,43 +176,34 @@ export function DateTimePicker({
             )}
           </div>
 
-          {/* Giờ : phút */}
-          <div className="mt-2 flex items-center justify-center border-t border-border pt-2">
-            <select
-              value={pad(selected?.hh ?? 0)}
-              onChange={(e) =>
-                emit(
-                  selected?.d ?? today.getDate(),
-                  Number(e.target.value),
-                  selected?.mm ?? 0,
-                )
-              }
-              className="rounded-lg border border-border bg-bg px-2 py-1 text-sm text-text outline-none focus:border-primary"
-            >
-              {Array.from({ length: 24 }, (_, h) => (
-                <option key={h} value={pad(h)}>
-                  {pad(h)}
-                </option>
-              ))}
-            </select>
+          <div className="mt-2 flex items-center border-t border-border pt-2">
+            <div className="flex-1">
+              <FormSelect
+                value={pad(selected?.hh ?? 0)}
+                options={HOUR_OPTIONS}
+                onChange={(v) =>
+                  emit(
+                    selected?.d ?? today.getDate(),
+                    Number(v),
+                    selected?.mm ?? 0,
+                  )
+                }
+              />
+            </div>
             <span className="mx-2 text-sm font-medium text-text">:</span>
-            <select
-              value={pad(selected?.mm ?? 0)}
-              onChange={(e) =>
-                emit(
-                  selected?.d ?? today.getDate(),
-                  selected?.hh ?? 0,
-                  Number(e.target.value),
-                )
-              }
-              className="rounded-lg border border-border bg-bg px-2 py-1 text-sm text-text outline-none focus:border-primary"
-            >
-              {Array.from({ length: 60 }, (_, m) => (
-                <option key={m} value={pad(m)}>
-                  {pad(m)}
-                </option>
-              ))}
-            </select>
+            <div className="flex-1">
+              <FormSelect
+                value={pad(selected?.mm ?? 0)}
+                options={MINUTE_OPTIONS}
+                onChange={(v) =>
+                  emit(
+                    selected?.d ?? today.getDate(),
+                    selected?.hh ?? 0,
+                    Number(v),
+                  )
+                }
+              />
+            </div>
             <button
               type="button"
               onClick={() => {

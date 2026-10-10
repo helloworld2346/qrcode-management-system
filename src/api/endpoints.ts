@@ -28,4 +28,10 @@ export const endpoints = {
     qr: (id: string) => `/items/${id}/qr`,
     resolve: (code: string) => `/items/resolve/${code}`,
   },
+  accounts: {
+    list: "/accounts/getAll",
+    detail: (id: string) => `/accounts/${id}`,
+    create: "/accounts",
+    remove: (id: string) => `/accounts/${id}`,
+  },
 };

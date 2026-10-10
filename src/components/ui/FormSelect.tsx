@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useEffect } from "react";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 
 export interface FormSelectOption {
@@ -16,6 +16,8 @@ interface Props {
   className?: string;
 }
 
+const DROPDOWN_MAX_HEIGHT = 240; // khớp max-h-60 (15rem)
+
 export function FormSelect({
   value,
   options,
@@ -26,7 +28,9 @@ export function FormSelect({
   className = "",
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
@@ -39,11 +43,21 @@ export function FormSelect({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, [onBlur]);
 
+  useLayoutEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    // Nếu dưới không đủ chỗ mà trên rộng hơn thì lật lên trên
+    setDropUp(spaceBelow < DROPDOWN_MAX_HEIGHT && spaceAbove > spaceBelow);
+  }, [open]);
+
   const selected = options.find((o) => o.value === value);
 
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
@@ -52,12 +66,14 @@ export function FormSelect({
           invalid ? "border-accent" : "border-border"
         }`}
       >
-        <span className={selected ? "" : "text-text text-opacity-40"}>
+        <span
+          className={`truncate ${selected ? "" : "text-text text-opacity-40"}`}
+        >
           {selected?.label ?? placeholder}
         </span>
         <FiChevronDown
           size={16}
-          className={`text-text text-opacity-50 transition-transform ${
+          className={`ml-2 shrink-0 text-text text-opacity-50 transition-transform ${
             open ? "rotate-180" : ""
           }`}
         />
@@ -66,7 +82,9 @@ export function FormSelect({
       {open ? (
         <ul
           role="listbox"
-          className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-auto rounded-lg border border-border bg-surface py-1 shadow-lg"
+          className={`absolute left-0 right-0 z-30 max-h-60 overflow-auto rounded-lg border border-border bg-surface py-1 shadow-lg ${
+            dropUp ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
         >
           {options.map((opt) => {
             const active = opt.value === value;

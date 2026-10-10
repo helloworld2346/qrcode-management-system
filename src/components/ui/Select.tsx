@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 
 interface Option {
@@ -13,9 +13,13 @@ interface Props {
   className?: string;
 }
 
+const MENU_MAX_HEIGHT = 240;
+
 export function Select({ value, options, onChange, className = "" }: Props) {
   const [open, setOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onClickOutside = (e: MouseEvent) => {
@@ -27,11 +31,20 @@ export function Select({ value, options, onChange, className = "" }: Props) {
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
+  useLayoutEffect(() => {
+    if (!open || !btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    setDropUp(spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow);
+  }, [open]);
+
   const selected = options.find((o) => o.value === value);
 
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
+        ref={btnRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="listbox"
@@ -50,7 +63,9 @@ export function Select({ value, options, onChange, className = "" }: Props) {
       {open ? (
         <ul
           role="listbox"
-          className="absolute bottom-full left-0 z-30 mb-1 min-w-full overflow-hidden rounded-lg border border-border bg-surface py-1 shadow-lg"
+          className={`absolute left-0 z-30 min-w-full max-h-60 overflow-auto rounded-lg border border-border bg-surface py-1 shadow-lg ${
+            dropUp ? "bottom-full mb-1" : "top-full mt-1"
+          }`}
         >
           {options.map((opt) => {
             const active = opt.value === value;
