@@ -1,15 +1,23 @@
-import { QRCodeSVG } from "qrcode.react";
 import { FiArrowLeft, FiPrinter } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
-import { findAssetByCode } from "@/features/assets/data/mock";
+import { useAssetByCode, useAssetQR } from "@/features/assets/assets.hooks";
 
 const LABEL_WIDTH = "40mm";
 const LABEL_HEIGHT = "30mm";
 
 export function AssetPrintPage() {
   const { code = "" } = useParams();
-  const asset = findAssetByCode(code);
+  const { data: asset, isLoading } = useAssetByCode(code);
+  const { data: qrUrl } = useAssetQR(asset?.id);
+
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl border border-border bg-surface px-5 py-10 text-center text-text text-opacity-60">
+        Đang tải...
+      </div>
+    );
+  }
 
   if (!asset) {
     return (
@@ -30,7 +38,6 @@ export function AssetPrintPage() {
 
   return (
     <div>
-      {/* Vùng điều khiển - ẩn khi in */}
       <div className="no-print mb-4 flex flex-wrap items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4">
         <div className="mb-2 mr-4">
           <Link
@@ -57,7 +64,6 @@ export function AssetPrintPage() {
         </button>
       </div>
 
-      {/* Vùng tem - chỉ in phần này */}
       <div className="no-print mb-4 text-xs text-text text-opacity-40">
         Xem trước tem:
       </div>
@@ -67,14 +73,20 @@ export function AssetPrintPage() {
           style={{ width: LABEL_WIDTH, height: LABEL_HEIGHT }}
         >
           <div className="mr-2 flex items-center justify-center p-1">
-            <QRCodeSVG value={asset.code} size={80} level="M" />
+            {qrUrl ? (
+              <img src={qrUrl} alt={asset.code} width={80} height={80} />
+            ) : (
+              <div className="h-[80px] w-[80px] bg-gray-100" />
+            )}
           </div>
           <div className="overflow-hidden pr-1">
             <p className="truncate text-[9px] font-semibold text-black">
               {asset.code}
             </p>
             <p className="truncate text-[8px] text-black">{asset.name}</p>
-            <p className="truncate text-[7px] text-black">{asset.unit}</p>
+            <p className="truncate text-[7px] text-black">
+              {asset.category_name ?? ""}
+            </p>
           </div>
         </div>
       </div>

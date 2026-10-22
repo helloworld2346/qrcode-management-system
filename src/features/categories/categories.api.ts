@@ -5,23 +5,22 @@ import type {
   Category,
   CreateCategoryRequest,
 } from "@/features/categories/categories.types";
-import type { ApiResponse } from "@/types/api.types";
+import type { ApiResponse, ListResult } from "@/types/api.types";
 
 export const categoriesApi = {
-  list: async () => {
-    const { data } = await http.get<ApiResponse<Category[]>>(
+  list: async (page = 1, size = 100) => {
+    const { data } = await http.get<ApiResponse<ListResult<Category>>>(
       endpoints.categories.list,
+      { params: { page, size } },
     );
     return data;
   },
-
   detail: async (id: string) => {
     const { data } = await http.get<ApiResponse<Category>>(
       endpoints.categories.detail(id),
     );
     return data;
   },
-
   create: async (payload: CreateCategoryRequest) => {
     const { data } = await http.post<ApiResponse<Category>>(
       endpoints.categories.create,
@@ -29,7 +28,13 @@ export const categoriesApi = {
     );
     return data;
   },
-
+  update: async (id: string, payload: CreateCategoryRequest) => {
+    const { data } = await http.put<ApiResponse<Category>>(
+      endpoints.categories.update(id),
+      payload,
+    );
+    return data;
+  },
   addAttribute: async (id: string, payload: AddCategoryAttributeRequest) => {
     const { data } = await http.post<ApiResponse<Category>>(
       endpoints.categories.addAttribute(id),
@@ -37,9 +42,14 @@ export const categoriesApi = {
     );
     return data;
   },
-
+  removeAttribute: async (id: string, attrId: string) => {
+    const { data } = await http.delete<ApiResponse<Category>>(
+      endpoints.categories.removeAttribute(id, attrId),
+    );
+    return data;
+  },
   remove: async (id: string) => {
-    const { data } = await http.delete<ApiResponse<string>>(
+    const { data } = await http.delete<ApiResponse<{ message: string }>>(
       endpoints.categories.remove(id),
     );
     return data;

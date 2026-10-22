@@ -1,30 +1,29 @@
 export interface CategoryAttribute {
-  idCategoryAttribute: string;
-  attributeId: string;
+  attribute_id: string;
   code: string;
-  attributeName: string;
-  dataType: string;
-  required: boolean;
-  sortOrder: number;
-  defaultValue: string;
+  name: string;
+  data_type: string;
+  options?: string[];
+  is_required: boolean;
+  default_value?: string;
+  sort_order: number;
 }
 
 export interface Category {
-  idCategory: string;
-  categoryName: string;
-  description: string;
-  attributes: CategoryAttribute[];
+  id: string;
+  name: string;
+  code: string;
+  attributes?: CategoryAttribute[];
 }
 
 export interface CreateCategoryRequest {
-  categoryName: string;
-  description: string;
+  name: string;
+  code: string;
 }
 
 export interface AddCategoryAttributeRequest {
-  category: string;
-  attribute: string;
-  required: boolean;
-  sortOrder: number;
-  defaultValue: string;
+  attribute_id: string;
+  is_required: boolean;
+  default_value?: string;
+  sort_order?: number;
 }

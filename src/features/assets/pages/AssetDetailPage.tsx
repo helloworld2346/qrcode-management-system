@@ -1,18 +1,49 @@
-import { QRCodeSVG } from "qrcode.react";
+import { useState } from "react";
 import { FiArrowLeft, FiEdit2, FiPrinter } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
 import {
-  findAssetByCode,
+  useAssetByCode,
+  useAssetHistory,
+  useAssetQR,
+  useUpdateAssetStatus,
+} from "@/features/assets/assets.hooks";
+import {
   statusColor,
+  statusLabel,
   statusMeta,
-} from "@/features/assets/data/mock";
+  type AssetStatus,
+} from "@/features/assets/assets.types";
+import { useAuthStore } from "@/store/auth.store";
+import { errorMessage } from "@/types/api.types";
+
+const fmtValue = (v: unknown): string => {
+  if (v === null || v === undefined) return "-";
+  if (Array.isArray(v)) return v.join(", ");
+  if (typeof v === "boolean") return v ? "Có" : "Không";
+  return String(v);
+};
 
 export function AssetDetailPage() {
   const { code = "" } = useParams();
-  const asset = findAssetByCode(code);
+  const user = useAuthStore((s) => s.user);
+  const { data: asset, isLoading, error } = useAssetByCode(code);
+  const { data: qrUrl } = useAssetQR(asset?.id);
+  const { data: history } = useAssetHistory(asset?.id);
+  const statusMut = useUpdateAssetStatus();
+  const [newStatus, setNewStatus] = useState<AssetStatus | "">("");
+  const [note, setNote] = useState("");
+  const [statusErr, setStatusErr] = useState("");
 
-  if (!asset) {
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl border border-border bg-surface px-5 py-10 text-center text-text text-opacity-60">
+        Đang tải...
+      </div>
+    );
+  }
+
+  if (error || !asset) {
     return (
       <div className="rounded-2xl border border-border bg-surface px-5 py-10 text-center">
         <p className="mb-3 text-sm text-text text-opacity-60">
@@ -29,15 +60,34 @@ export function AssetDetailPage() {
     );
   }
 
-  const statusText =
-    statusMeta.find((s) => s.value === asset.status)?.label ?? asset.status;
-
   const rows = [
     { label: "Mã tài sản", value: asset.code },
     { label: "Tên tài sản", value: asset.name },
-    { label: "Đơn vị", value: asset.unit },
-    { label: "Ngày cấp", value: asset.issuedDate },
+    { label: "Danh mục", value: asset.category_name ?? asset.category_id },
+    { label: "Đơn vị (ID)", value: asset.department_id },
+    { label: "Ngày tạo", value: new Date(asset.created_at).toLocaleString("vi-VN") },
+    { label: "Đã in tem", value: asset.is_printed ? "Có" : "Chưa" },
   ];
+
+  const attrRows = Object.entries(asset.attributes ?? {}).map(([k, v]) => ({
+    label: k,
+    value: fmtValue(v),
+  }));
+
+  const submitStatus = () => {
+    if (!newStatus) return;
+    setStatusErr("");
+    statusMut.mutate(
+      { id: asset.id, payload: { status: newStatus, note: note || undefined } },
+      {
+        onSuccess: () => {
+          setNewStatus("");
+          setNote("");
+        },
+        onError: (e) => setStatusErr(errorMessage(e)),
+      },
+    );
+  };
 
   return (
     <div>
@@ -76,9 +126,8 @@ export function AssetDetailPage() {
       </div>
 
       <div className="flex flex-wrap">
-        {/* Cột trái: thông tin */}
         <div className="mb-4 w-full lg:w-2/3 lg:pr-2">
-          <div className="rounded-2xl border border-border bg-surface p-5">
+          <div className="mb-4 rounded-2xl border border-border bg-surface p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">
                 Thông tin cơ bản
@@ -94,38 +143,121 @@ export function AssetDetailPage() {
                   className="mr-2 inline-block h-1.5 w-1.5 rounded-full"
                   style={{ backgroundColor: statusColor[asset.status] }}
                 />
-                {statusText}
+                {statusLabel(asset.status)}
               </span>
             </div>
-
             <dl>
               {rows.map((r) => (
                 <div
                   key={r.label}
                   className="flex border-b border-border py-3 last:border-b-0"
                 >
-                  <dt className="w-40 text-sm text-text text-opacity-50">
-                    {r.label}
-                  </dt>
+                  <dt className="w-40 text-sm text-text text-opacity-50">{r.label}</dt>
                   <dd className="text-sm font-medium text-text">{r.value}</dd>
                 </div>
               ))}
             </dl>
           </div>
+
+          {attrRows.length > 0 && (
+            <div className="mb-4 rounded-2xl border border-border bg-surface p-5">
+              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">
+                Thuộc tính
+              </h2>
+              <dl>
+                {attrRows.map((r) => (
+                  <div
+                    key={r.label}
+                    className="flex border-b border-border py-3 last:border-b-0"
+                  >
+                    <dt className="w-40 text-sm text-text text-opacity-50">{r.label}</dt>
+                    <dd className="text-sm font-medium text-text">{r.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+
+          <div className="mb-4 rounded-2xl border border-border bg-surface p-5">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">
+              Đổi trạng thái
+            </h2>
+            <div className="flex flex-wrap items-end gap-3">
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value as AssetStatus)}
+                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
+              >
+                <option value="">-- Trạng thái mới --</option>
+                {statusMeta
+                  .filter((s) => s.value !== asset.status)
+                  .filter((s) => s.value !== "LIQUIDATED" || user?.role === "admin")
+                  .map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+              </select>
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Ghi chú"
+                className="w-56 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
+              />
+              <button
+                type="button"
+                onClick={submitStatus}
+                disabled={!newStatus || statusMut.isPending}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {statusMut.isPending ? "Đang đổi..." : "Đổi"}
+              </button>
+            </div>
+            {statusErr && <p className="mt-2 text-sm text-red-500">{statusErr}</p>}
+          </div>
+
+          <div className="rounded-2xl border border-border bg-surface p-5">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">
+              Lịch sử trạng thái
+            </h2>
+            {!history || history.length === 0 ? (
+              <p className="text-sm text-text text-opacity-50">Chưa có.</p>
+            ) : (
+              <ul className="space-y-2">
+                {history.map((h) => (
+                  <li key={h.id} className="flex items-baseline text-sm">
+                    <span className="w-40 shrink-0 text-text text-opacity-50">
+                      {new Date(h.created_at).toLocaleString("vi-VN")}
+                    </span>
+                    <span className="font-medium text-text">
+                      {h.old_status ? `${statusLabel(h.old_status)} → ` : ""}
+                      {statusLabel(h.new_status)}
+                    </span>
+                    {h.note && (
+                      <span className="ml-2 text-text text-opacity-60">
+                        ({h.note})
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
-        {/* Cột phải: QR */}
         <div className="mb-4 w-full lg:w-1/3 lg:pl-2">
           <div className="rounded-2xl border border-border bg-surface p-5">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">
               Mã QR
             </h2>
             <div className="mb-4 flex items-center justify-center rounded-xl border border-border bg-white py-6">
-              <QRCodeSVG value={asset.code} size={160} level="M" />
+              {qrUrl ? (
+                <img src={qrUrl} alt={`QR ${asset.code}`} width={160} height={160} />
+              ) : (
+                <span className="text-xs text-text text-opacity-40">Đang tải QR...</span>
+              )}
             </div>
-            <p className="text-center text-xs text-text text-opacity-50">
-              {asset.code}
-            </p>
+            <p className="text-center text-xs text-text text-opacity-50">{asset.code}</p>
           </div>
         </div>
       </div>

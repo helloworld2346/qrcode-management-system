@@ -3,13 +3,15 @@ import { useMutation } from "@tanstack/react-query";
 import { authApi } from "@/features/auth/auth.api";
 import type { AuthResult } from "@/features/auth/auth.types";
 import { useAuthStore, type Role } from "@/store/auth.store";
-import { pickResult } from "@/types/api.types";
+import { pickData } from "@/types/api.types";
 import { logger } from "@/utils/logger";
 
+// Claims do Go backend phát hành: sub/role/department_id/type/jti/exp/iat
 interface JwtPayload {
   sub: string;
-  scope: string;
-  userName: string;
+  role: string;
+  department_id?: string;
+  type: string;
   exp: number;
   iat: number;
   jti: string;
@@ -33,8 +35,8 @@ function decodeToken(token: string): JwtPayload | null {
   }
 }
 
-function scopeToRole(scope?: string): Role {
-  return scope && scope.toLowerCase().includes("admin") ? "admin" : "unit";
+function claimToRole(role?: string): Role {
+  return role === "admin" ? "admin" : "user";
 }
 
 const useMock = import.meta.env.VITE_USE_MOCK === "true";
@@ -43,37 +45,41 @@ export function useLogin() {
   const setLogin = useAuthStore((s) => s.login);
 
   return useMutation({
-    mutationFn: async (payload: { userName: string; password: string }) => {
+    mutationFn: async (payload: { username: string; password: string }) => {
       if (useMock) {
-        return { token: "mock-token", authenticated: true } as AuthResult;
+        return {
+          access_token: "mock-token",
+          refresh_token: "mock-refresh",
+          token_type: "Bearer",
+          expires_in: 3600,
+        } as AuthResult;
       }
       const res = await authApi.login(payload);
-      const result = pickResult(res);
-      if (!res.success || !result?.token) {
-        throw new Error(res.message || "Đăng nhập thất bại");
+      const result = pickData(res);
+      if (!res.ok || !result?.access_token) {
+        throw new Error(res.error?.message || "Đăng nhập thất bại");
       }
       return result;
     },
-    onSuccess: (result) => {
-      const token = result.token;
-
+    onSuccess: (result, payload) => {
       if (useMock) {
         setLogin(
-          { id: "1", username: "admin", unitId: "", role: "admin" },
-          token,
+          { id: "1", username: "admin", departmentId: "", role: "admin" },
+          result.access_token,
+          result.refresh_token,
         );
         return;
       }
-
-      const claims = decodeToken(token);
+      const claims = decodeToken(result.access_token);
       setLogin(
         {
           id: claims?.sub ?? "",
-          username: claims?.userName ?? "",
-          unitId: "",
-          role: scopeToRole(claims?.scope),
+          username: payload.username, // JWT không chứa username — giữ cái user đã nhập
+          departmentId: claims?.department_id ?? "",
+          role: claimToRole(claims?.role),
         },
-        token,
+        result.access_token,
+        result.refresh_token,
       );
     },
     onError: (err) => {
@@ -96,6 +102,20 @@ export function useLogout() {
     },
     onSettled: () => {
       clear();
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (payload: {
+      old_password: string;
+      new_password: string;
+    }) => {
+      const res = await authApi.changePassword(payload);
+      if (!res.ok) {
+        throw new Error(res.error?.message || "Đổi mật khẩu thất bại");
+      }
     },
   });
 }

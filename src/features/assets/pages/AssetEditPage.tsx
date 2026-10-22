@@ -1,16 +1,38 @@
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { type AssetFormValues } from "@/features/assets/assets.schema";
-import { isoToVN, vnToISO } from "@/features/assets/assets.utils";
+import type { AssetFormValues } from "@/features/assets/assets.schema";
+import { useAssetByCode, useUpdateAsset } from "@/features/assets/assets.hooks";
 import { AssetForm } from "@/features/assets/components/AssetForm";
-import { findAssetByCode } from "@/features/assets/data/mock";
-import { logger } from "@/utils/logger";
+import { categoriesApi } from "@/features/categories/categories.api";
+import { departmentsApi } from "@/features/departments/departments.api";
+import { pickData, errorMessage } from "@/types/api.types";
 
 export function AssetEditPage() {
   const { code = "" } = useParams();
   const navigate = useNavigate();
-  const asset = findAssetByCode(code);
+  const { data: asset, isLoading } = useAssetByCode(code);
+  const updateMut = useUpdateAsset();
+  const [submitErr, setSubmitErr] = useState("");
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => pickData(await categoriesApi.list(1, 100))?.items ?? [],
+  });
+  const { data: departments } = useQuery({
+    queryKey: ["departments"],
+    queryFn: async () => pickData(await departmentsApi.list(1, 100))?.items ?? [],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="rounded-2xl border border-border bg-surface px-5 py-10 text-center text-text text-opacity-60">
+        Đang tải...
+      </div>
+    );
+  }
 
   if (!asset) {
     return (
@@ -30,12 +52,21 @@ export function AssetEditPage() {
   }
 
   const onSubmit = (values: AssetFormValues) => {
-    logger.info("update asset", {
-      ...values,
-      code: asset.code,
-      issuedDate: isoToVN(values.issuedDate),
-    });
-    navigate(`/dashboard/assets/${asset.code}`);
+    setSubmitErr("");
+    updateMut.mutate(
+      {
+        id: asset.id,
+        payload: {
+          name: values.name,
+          category_id: values.category_id || undefined,
+          attributes: values.attributes,
+        },
+      },
+      {
+        onSuccess: () => navigate(`/dashboard/assets/${asset.code}`),
+        onError: (e) => setSubmitErr(errorMessage(e)),
+      },
+    );
   };
 
   return (
@@ -56,18 +87,25 @@ export function AssetEditPage() {
         </p>
       </div>
 
+      {submitErr && (
+        <div className="mb-4 rounded-2xl border border-red-300 bg-red-50 px-5 py-3 text-sm text-red-600">
+          {submitErr}
+        </div>
+      )}
+
       <AssetForm
         defaultValues={{
-          code: asset.code,
           name: asset.name,
-          unit: asset.unit,
-          status: asset.status,
-          issuedDate: vnToISO(asset.issuedDate),
+          category_id: asset.category_id,
+          department_id: asset.department_id,
+          attributes: (asset.attributes ?? {}) as Record<string, unknown>,
           note: "",
         }}
-        submitLabel="Lưu thay đổi"
+        submitLabel={updateMut.isPending ? "Đang lưu..." : "Lưu thay đổi"}
         cancelTo={`/dashboard/assets/${asset.code}`}
         onSubmit={onSubmit}
+        categories={categories ?? []}
+        departments={departments ?? []}
       />
     </div>
   );

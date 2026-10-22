@@ -29,7 +29,7 @@ export function LoginForm() {
 
   const onSubmit = (values: LoginValues) => {
     mutate(
-      { userName: values.username, password: values.password },
+      { username: values.username, password: values.password },
       { onSuccess: () => navigate("/dashboard") },
     );
   };

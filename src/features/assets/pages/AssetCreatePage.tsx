@@ -1,17 +1,43 @@
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 
-import { type AssetFormValues } from "@/features/assets/assets.schema";
+import type { AssetFormValues } from "@/features/assets/assets.schema";
 import { AssetForm } from "@/features/assets/components/AssetForm";
-import { logger } from "@/utils/logger";
+import { useCreateAsset } from "@/features/assets/assets.hooks";
+import { categoriesApi } from "@/features/categories/categories.api";
+import { departmentsApi } from "@/features/departments/departments.api";
+import { pickData, errorMessage } from "@/types/api.types";
 
 export function AssetCreatePage() {
   const navigate = useNavigate();
+  const createMut = useCreateAsset();
+  const [submitErr, setSubmitErr] = useState("");
+
+  const { data: categories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => pickData(await categoriesApi.list(1, 100))?.items ?? [],
+  });
+  const { data: departments } = useQuery({
+    queryKey: ["departments"],
+    queryFn: async () => pickData(await departmentsApi.list(1, 100))?.items ?? [],
+  });
 
   const onSubmit = (values: AssetFormValues) => {
-    // TODO: gọi qua useCreateAsset (TanStack Query mutation) khi có API layer
-    logger.info("create asset", values);
-    navigate("/dashboard/assets");
+    setSubmitErr("");
+    createMut.mutate(
+      {
+        name: values.name,
+        category_id: values.category_id,
+        department_id: values.department_id || undefined,
+        attributes: values.attributes,
+      },
+      {
+        onSuccess: (a) => navigate(`/dashboard/assets/${a.code}`),
+        onError: (e) => setSubmitErr(errorMessage(e)),
+      },
+    );
   };
 
   return (
@@ -32,18 +58,25 @@ export function AssetCreatePage() {
         </p>
       </div>
 
+      {submitErr && (
+        <div className="mb-4 rounded-2xl border border-red-300 bg-red-50 px-5 py-3 text-sm text-red-600">
+          {submitErr}
+        </div>
+      )}
+
       <AssetForm
         defaultValues={{
-          code: "",
           name: "",
-          unit: "",
-          status: "available",
-          issuedDate: "",
+          category_id: "",
+          department_id: "",
+          attributes: {},
           note: "",
         }}
-        submitLabel="Lưu tài sản"
+        submitLabel={createMut.isPending ? "Đang lưu..." : "Lưu tài sản"}
         cancelTo="/dashboard/assets"
         onSubmit={onSubmit}
+        categories={categories ?? []}
+        departments={departments ?? []}
       />
     </div>
   );

@@ -1,19 +1,20 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type Role = "admin" | "unit";
+export type Role = "admin" | "user";
 
 interface AuthUser {
   id: string;
   username: string;
-  unitId: string;
+  departmentId: string;
   role: Role;
 }
 
 interface AuthState {
   user: AuthUser | null;
   token: string | null;
-  login: (user: AuthUser, token: string) => void;
+  refreshToken: string | null;
+  login: (user: AuthUser, token: string, refreshToken?: string) => void;
   logout: () => void;
 }
 
@@ -22,8 +23,10 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
-      login: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
+      refreshToken: null,
+      login: (user, token, refreshToken) =>
+        set({ user, token, refreshToken: refreshToken ?? null }),
+      logout: () => set({ user: null, token: null, refreshToken: null }),
     }),
     { name: "qr-auth" },
   ),

@@ -5,6 +5,7 @@ import type {
   ChangePasswordRequest,
   IntrospectResult,
   LoginRequest,
+  RefreshRequest,
   TokenRequest,
 } from "@/features/auth/auth.types";
 import type { ApiResponse } from "@/types/api.types";
@@ -19,14 +20,14 @@ export const authApi = {
   },
 
   logout: async (payload: TokenRequest) => {
-    const { data } = await http.post<ApiResponse<string>>(
+    const { data } = await http.post<ApiResponse<{ message: string }>>(
       endpoints.auth.logout,
       payload,
     );
     return data;
   },
 
-  refresh: async (payload: TokenRequest) => {
+  refresh: async (payload: RefreshRequest) => {
     const { data } = await http.post<ApiResponse<AuthResult>>(
       endpoints.auth.refresh,
       payload,
@@ -43,7 +44,7 @@ export const authApi = {
   },
 
   changePassword: async (payload: ChangePasswordRequest) => {
-    const { data } = await http.put<ApiResponse<Record<string, never>>>(
+    const { data } = await http.put<ApiResponse<{ message: string }>>(
       endpoints.auth.changePassword,
       payload,
     );

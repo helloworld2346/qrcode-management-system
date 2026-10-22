@@ -4,7 +4,6 @@ import { Controller, useForm } from "react-hook-form";
 import { FiSave } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
-import { DatePicker } from "@/components/ui/DatePicker";
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
@@ -14,17 +13,89 @@ import {
   type AssetFormValues,
 } from "@/features/assets/assets.schema";
 import {
-  assetRows,
   statusColor,
   statusMeta,
-  type AssetStatus,
-} from "@/features/assets/data/mock";
+} from "@/features/assets/assets.types";
+import type { Category, CategoryAttribute } from "@/features/categories/categories.types";
+import { useAuthStore } from "@/store/auth.store";
 
 interface Props {
   defaultValues: AssetFormValues;
   submitLabel: string;
   cancelTo: string;
   onSubmit: (values: AssetFormValues) => void;
+  categories: Category[];
+  departments: { id: string; name: string }[];
+}
+
+// Input động theo data_type của attribute
+function AttributeInput({
+  attr,
+  value,
+  onChange,
+}: {
+  attr: CategoryAttribute;
+  value: unknown;
+  onChange: (v: unknown) => void;
+}) {
+  const v = (value ?? "") as string;
+  switch (attr.data_type) {
+    case "SELECT":
+      return (
+        <FormSelect
+          value={v}
+          onChange={onChange}
+          placeholder="-- Chọn --"
+          options={(attr.options ?? []).map((o) => ({ value: o, label: o }))}
+        />
+      );
+    case "NUMBER":
+    case "DECIMAL":
+      return (
+        <Input
+          type="number"
+          value={v}
+          onChange={(e) => onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+        />
+      );
+    case "BOOLEAN":
+      return (
+        <FormSelect
+          value={value === true ? "true" : value === false ? "false" : ""}
+          onChange={(s) => onChange(s === "" ? undefined : s === "true")}
+          placeholder="-- Chọn --"
+          options={[
+            { value: "true", label: "Có" },
+            { value: "false", label: "Không" },
+          ]}
+        />
+      );
+    case "DATE":
+      return (
+        <Input type="date" value={v} onChange={(e) => onChange(e.target.value || undefined)} />
+      );
+    case "TEXTAREA":
+      return <Textarea value={v} onChange={(e) => onChange(e.target.value || undefined)} rows={3} />;
+    case "MULTI_SELECT":
+      return (
+        <select
+          multiple
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+          value={Array.isArray(value) ? (value as string[]) : []}
+          onChange={(e) =>
+            onChange(Array.from(e.target.selectedOptions).map((o) => o.value))
+          }
+        >
+          {(attr.options ?? []).map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+      );
+    default:
+      return <Input value={v} onChange={(e) => onChange(e.target.value || undefined)} />;
+  }
 }
 
 export function AssetForm({
@@ -32,35 +103,43 @@ export function AssetForm({
   submitLabel,
   cancelTo,
   onSubmit,
+  categories,
+  departments,
 }: Props) {
-  const unitOptions = useMemo(
-    () =>
-      Array.from(new Set(assetRows.map((a) => a.unit))).map((u) => ({
-        value: u,
-        label: u,
-      })),
-    [],
-  );
-
-  const statusOptions = useMemo(
-    () => statusMeta.map((s) => ({ value: s.value, label: s.label })),
-    [],
-  );
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === "admin";
 
   const {
     register,
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<AssetFormValues>({
     resolver: zodResolver(assetSchema),
     defaultValues,
   });
 
-  const watchCode = watch("code");
   const watchName = watch("name");
-  const watchStatus = watch("status") as AssetStatus;
+  const watchCategoryId = watch("category_id");
+  const watchAttributes = watch("attributes") ?? {};
+
+  const categoryOptions = useMemo(
+    () => categories.map((c) => ({ value: c.id, label: `${c.name} (${c.code})` })),
+    [categories],
+  );
+  const deptOptions = useMemo(
+    () => departments.map((d) => ({ value: d.id, label: d.name })),
+    [departments],
+  );
+  const schema = useMemo(
+    () =>
+      (categories.find((c) => c.id === watchCategoryId)?.attributes ?? [])
+        .slice()
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [categories, watchCategoryId],
+  );
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -72,39 +151,6 @@ export function AssetForm({
             </h2>
 
             <div className="flex flex-wrap">
-              <FormField
-                label="Mã tài sản"
-                required
-                error={errors.code?.message}
-                className="mb-4 w-full md:w-1/2 md:pr-2"
-              >
-                <Input
-                  {...register("code")}
-                  invalid={!!errors.code}
-                  placeholder="VD: TS-2024-0001"
-                />
-              </FormField>
-
-              <FormField
-                label="Ngày cấp"
-                required
-                error={errors.issuedDate?.message}
-                className="mb-4 w-full md:w-1/2 md:pl-2"
-              >
-                <Controller
-                  name="issuedDate"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      invalid={!!errors.issuedDate}
-                    />
-                  )}
-                />
-              </FormField>
-
               <FormField
                 label="Tên tài sản"
                 required
@@ -119,56 +165,73 @@ export function AssetForm({
               </FormField>
 
               <FormField
-                label="Đơn vị"
+                label="Danh mục"
                 required
-                error={errors.unit?.message}
-                className="mb-4 w-full md:w-1/2 md:pr-2"
+                error={errors.category_id?.message}
+                className={`mb-4 w-full ${isAdmin ? "md:w-1/2 md:pr-2" : ""}`}
               >
                 <Controller
-                  name="unit"
+                  name="category_id"
                   control={control}
                   render={({ field }) => (
                     <FormSelect
                       value={field.value}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
-                      invalid={!!errors.unit}
-                      placeholder="-- Chọn đơn vị --"
-                      options={unitOptions}
+                      invalid={!!errors.category_id}
+                      placeholder="-- Chọn danh mục --"
+                      options={categoryOptions}
                     />
                   )}
                 />
               </FormField>
 
-              <FormField
-                label="Trạng thái"
-                required
-                error={errors.status?.message}
-                className="mb-4 w-full md:w-1/2 md:pl-2"
-              >
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <FormSelect
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      invalid={!!errors.status}
-                      options={statusOptions}
-                    />
-                  )}
-                />
-              </FormField>
+              {isAdmin && (
+                <FormField
+                  label="Đơn vị"
+                  className="mb-4 w-full md:w-1/2 md:pl-2"
+                  error={errors.department_id?.message}
+                >
+                  <Controller
+                    name="department_id"
+                    control={control}
+                    render={({ field }) => (
+                      <FormSelect
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        invalid={!!errors.department_id}
+                        placeholder="-- Chọn đơn vị --"
+                        options={deptOptions}
+                      />
+                    )}
+                  />
+                </FormField>
+              )}
 
-              <FormField
-                label="Ghi chú"
-                error={errors.note?.message}
-                className="w-full"
-              >
+              {schema.map((attr) => (
+                <FormField
+                  key={attr.attribute_id}
+                  label={attr.name}
+                  required={attr.is_required}
+                  className="mb-4 w-full md:w-1/2 md:pr-2"
+                >
+                  <AttributeInput
+                    attr={attr}
+                    value={watchAttributes[attr.code]}
+                    onChange={(v) => {
+                      const next = { ...watchAttributes };
+                      if (v === undefined || v === "") delete next[attr.code];
+                      else next[attr.code] = v;
+                      setValue("attributes", next, { shouldDirty: true });
+                    }}
+                  />
+                </FormField>
+              ))}
+
+              <FormField label="Ghi chú" className="w-full">
                 <Textarea
                   {...register("note")}
-                  invalid={!!errors.note}
                   rows={3}
                   placeholder="Thông tin bổ sung (không bắt buộc)"
                 />
@@ -193,21 +256,14 @@ export function AssetForm({
             <p className="mb-1 truncate text-sm font-medium text-text">
               {watchName || "Tên tài sản"}
             </p>
-            <p className="mb-2 text-xs text-text text-opacity-50">
-              {watchCode || "Mã tài sản"}
-            </p>
             <span
               className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
               style={{
-                backgroundColor: `${statusColor[watchStatus]}1a`,
-                color: statusColor[watchStatus],
+                backgroundColor: `${statusColor.IN_STOCK}1a`,
+                color: statusColor.IN_STOCK,
               }}
             >
-              <span
-                className="mr-2 inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: statusColor[watchStatus] }}
-              />
-              {statusMeta.find((s) => s.value === watchStatus)?.label}
+              {statusMeta[0].label}
             </span>
           </div>
         </div>
