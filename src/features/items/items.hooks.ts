@@ -142,6 +142,7 @@ export function useUpdateItemStatus() {
       queryClient.invalidateQueries({
         queryKey: itemKeys.detail(variables.id),
       });
+      queryClient.invalidateQueries({ queryKey: ["items", "resolve"] });
     },
     onError: (err) => {
       logger.error("update item status failed", err);
