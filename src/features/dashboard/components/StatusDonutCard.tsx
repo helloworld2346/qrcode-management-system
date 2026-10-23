@@ -1,12 +1,18 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
-import { statusData } from "@/features/dashboard/data/mock";
+import { statusLabel } from "@/features/assets/assets.types";
+import { useDashboardStats } from "@/features/dashboard/dashboard.hooks";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
 
 import { ChartTooltip } from "./ChartTooltip";
 
 export function StatusDonutCard() {
   const { series } = useChartColors();
+  const { data: stats } = useDashboardStats();
+  const statusData = (stats?.by_status ?? []).map((s) => ({
+    name: statusLabel(s.status),
+    value: s.count,
+  }));
   const total = statusData.reduce((sum, s) => sum + s.value, 0);
 
   return (

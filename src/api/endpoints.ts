@@ -48,6 +48,9 @@ export const endpoints = {
     qr: (id: string) => `/assets/${id}/qr.png`,
     lookup: (code: string) => `/assets/lookup/${code}`,
   },
+  stats: {
+    dashboard: "/stats/dashboard",
+  },
   inventory: {
     sessions: "/inventory/sessions",
     session: (id: string) => `/inventory/sessions/${id}`,

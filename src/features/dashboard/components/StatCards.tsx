@@ -1,8 +1,51 @@
-import { stats } from "@/features/dashboard/data/mock";
+import type { IconType } from "react-icons";
+import {
+  FiActivity,
+  FiAlertTriangle,
+  FiBox,
+  FiCrosshair,
+} from "react-icons/fi";
+
+import { useDashboardStats } from "@/features/dashboard/dashboard.hooks";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
+
+interface StatItem {
+  label: string;
+  value: string;
+  icon: IconType;
+  hint: string;
+}
 
 export function StatCards() {
   const { series } = useChartColors();
+  const { data } = useDashboardStats();
+
+  const stats: StatItem[] = [
+    {
+      label: "Tổng tài sản",
+      value: String(data?.total ?? "—"),
+      icon: FiBox,
+      hint: "Toàn đơn vị",
+    },
+    {
+      label: "Đang sử dụng",
+      value: String(data?.in_use ?? "—"),
+      icon: FiCrosshair,
+      hint: "Toàn đơn vị",
+    },
+    {
+      label: "Đã quét hôm nay",
+      value: String(data?.scanned_today ?? "—"),
+      icon: FiActivity,
+      hint: "24 giờ",
+    },
+    {
+      label: "Cần chú ý",
+      value: String(data?.attention ?? "—"),
+      icon: FiAlertTriangle,
+      hint: "Hỏng + chờ thanh lý",
+    },
+  ];
 
   return (
     <div className="-mx-2 mb-8 flex flex-wrap">
@@ -16,7 +59,6 @@ export function StatCards() {
                 backgroundImage: `linear-gradient(135deg, ${color}1f 0%, ${color}08 60%, transparent 100%)`,
               }}
             >
-              {/* Header: label + icon (outline mảnh) */}
               <div className="flex items-start justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wider text-text text-opacity-60">
                   {label}
@@ -33,12 +75,10 @@ export function StatCards() {
                 </span>
               </div>
 
-              {/* Value */}
               <p className="mt-4 text-4xl font-bold leading-none text-text">
                 {value}
               </p>
 
-              {/* Hint + mini sparkline */}
               <div className="mt-3 flex items-end justify-between">
                 <span
                   className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"

@@ -8,13 +8,18 @@ import {
   YAxis,
 } from "recharts";
 
-import { assetsByUnit } from "@/features/dashboard/data/mock";
+import { useDashboardStats } from "@/features/dashboard/dashboard.hooks";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
 
 import { ChartTooltip } from "./ChartTooltip";
 
 export function AssetsByUnitCard() {
   const { series } = useChartColors();
+  const { data: stats } = useDashboardStats();
+  const assetsByUnit = (stats?.by_department ?? []).map((d) => ({
+    unit: d.name,
+    value: d.count,
+  }));
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-surface p-5 shadow-sm">

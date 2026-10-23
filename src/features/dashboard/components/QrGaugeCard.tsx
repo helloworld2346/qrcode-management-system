@@ -1,24 +1,25 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
-import { qrAssignment } from "@/features/dashboard/data/mock";
+import { useDashboardStats } from "@/features/dashboard/dashboard.hooks";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
 
 export function QrGaugeCard() {
   const { series, track } = useChartColors();
-  const assigned = qrAssignment.assigned;
-  const total = qrAssignment.total;
+  const { data: stats } = useDashboardStats();
+  const assigned = stats?.printed ?? 0;
+  const total = stats?.total ?? 0;
   const unassigned = Math.max(total - assigned, 0);
-  const percent = Math.round((assigned / total) * 100);
+  const percent = total > 0 ? Math.round((assigned / total) * 100) : 0;
 
   const data = [
-    { name: "Đã gán", value: assigned, fill: series[1] },
-    { name: "Chưa gán", value: unassigned, fill: track },
+    { name: "Đã in", value: assigned, fill: series[1] },
+    { name: "Chưa in", value: unassigned, fill: track },
   ];
 
   return (
     <div className="relative mb-6 rounded-2xl border border-border bg-surface p-5 shadow-sm">
       <h2 className="mb-4 text-base font-semibold text-text">
-        Tỉ lệ đã gán QR
+        Tỉ lệ đã in tem QR
       </h2>
 
       <div className="relative mx-auto h-56 w-full max-w-xs">

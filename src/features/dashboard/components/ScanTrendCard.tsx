@@ -8,13 +8,19 @@ import {
   YAxis,
 } from "recharts";
 
-import { scanTrend } from "@/features/dashboard/data/mock";
+import { useDashboardStats } from "@/features/dashboard/dashboard.hooks";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
 
 import { ChartTooltip } from "./ChartTooltip";
 
 export function ScanTrendCard() {
   const { series, axis, track } = useChartColors();
+  const { data: stats } = useDashboardStats();
+  const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+  const scanTrend = (stats?.scans_7d ?? []).map((d) => ({
+    day: dayNames[new Date(d.day).getDay()],
+    scans: d.scans,
+  }));
 
   return (
     <div
