@@ -6,6 +6,7 @@ interface Props {
   cancelLabel?: string;
   danger?: boolean;
   loading?: boolean;
+  error?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -18,6 +19,7 @@ export function ConfirmDialog({
   cancelLabel = "Hủy",
   danger = true,
   loading = false,
+  error,
   onConfirm,
   onCancel,
 }: Props) {
@@ -36,6 +38,7 @@ export function ConfirmDialog({
         {message && (
           <p className="mb-4 text-sm text-text text-opacity-60">{message}</p>
         )}
+        {error && <p className="mb-3 text-xs text-accent">{error}</p>}
         <div className="mt-4 flex justify-end">
           <button
             type="button"

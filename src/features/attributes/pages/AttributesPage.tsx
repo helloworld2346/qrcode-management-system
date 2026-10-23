@@ -58,6 +58,7 @@ export function AttributesPage() {
   const isCustomRegex = regexPreset === "__custom__";
   const [formError, setFormError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteErr, setDeleteErr] = useState("");
 
   const { data: attributes, isLoading, isError, error } = useAttributes();
   const createAttribute = useCreateAttribute();
@@ -112,8 +113,17 @@ export function AttributesPage() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
+    setDeleteErr("");
     deleteAttribute.mutate(deleteTarget.id, {
-      onSettled: () => setDeleteTarget(null),
+      onSuccess: () => setDeleteTarget(null),
+      onError: (e) => {
+        const msg = errorMessage(e);
+        setDeleteErr(
+          msg.includes("used by categories")
+            ? "Thuộc tính đang được dùng trong danh mục — gỡ khỏi danh mục trước."
+            : msg,
+        );
+      },
     });
   };
 
@@ -301,6 +311,7 @@ export function AttributesPage() {
         message={deleteTarget ? `Xóa thuộc tính "${deleteTarget.name}"?` : ""}
         confirmLabel="Xóa"
         loading={deleteAttribute.isPending}
+        error={deleteErr}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

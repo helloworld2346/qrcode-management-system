@@ -29,6 +29,7 @@ export function DepartmentsPage() {
   const [codeTouched, setCodeTouched] = useState(false);
   const [editing, setEditing] = useState<Department | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
+  const [deleteErr, setDeleteErr] = useState("");
   const [err, setErr] = useState("");
 
   const { data: departments, isLoading, isError, error } = useQuery({
@@ -81,8 +82,10 @@ export function DepartmentsPage() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
+    setDeleteErr("");
     delMut.mutate(deleteTarget.id, {
-      onSettled: () => setDeleteTarget(null),
+      onSuccess: () => setDeleteTarget(null),
+      onError: (e) => setDeleteErr(errorMessage(e)),
     });
   };
 
@@ -212,6 +215,7 @@ export function DepartmentsPage() {
         message={deleteTarget ? `Xóa đơn vị "${deleteTarget.name}"?` : ""}
         confirmLabel="Xóa"
         loading={delMut.isPending}
+        error={deleteErr}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

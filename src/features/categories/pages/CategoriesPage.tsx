@@ -1,10 +1,9 @@
 import { useState } from "react";
-
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import {
   useCategories,
@@ -30,6 +29,7 @@ export function CategoriesPage() {
   const [codeTouched, setCodeTouched] = useState(false);
   const [err, setErr] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteErr, setDeleteErr] = useState("");
 
   const { data: categories, isLoading, isError, error } = useCategories();
   const createCategory = useCreateCategory();
@@ -55,8 +55,17 @@ export function CategoriesPage() {
 
   const handleDelete = () => {
     if (!deleteTarget) return;
+    setDeleteErr("");
     deleteCategory.mutate(deleteTarget.id, {
-      onSettled: () => setDeleteTarget(null),
+      onSuccess: () => setDeleteTarget(null),
+      onError: (e) => {
+        const msg = errorMessage(e);
+        setDeleteErr(
+          msg.includes("still has assets")
+            ? "Danh mục vẫn còn tài sản — chuyển hoặc xóa tài sản trước."
+            : msg,
+        );
+      },
     });
   };
 
@@ -173,6 +182,7 @@ export function CategoriesPage() {
         message={deleteTarget ? `Xóa danh mục "${deleteTarget.name}"?` : ""}
         confirmLabel="Xóa"
         loading={deleteCategory.isPending}
+        error={deleteErr}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
