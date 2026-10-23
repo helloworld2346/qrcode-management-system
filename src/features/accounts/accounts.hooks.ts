@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { pickData } from "@/types/api.types";
+import type { ApiResponse } from "@/types/api.types";
 
 import { accountsApi } from "./accounts.api";
 import type { CreateAccountRequest } from "./accounts.types";
@@ -9,10 +9,9 @@ export const accountKeys = {
   all: ["accounts"] as const,
 };
 
-function must<T>(res: { ok: boolean; data?: T; error?: { message?: string } }, fallback: string): T {
-  const d = pickData(res as never);
-  if (!res.ok || d === undefined) throw new Error(res.error?.message || fallback);
-  return d;
+function must<T>(res: ApiResponse<T>, fallback: string): T {
+  if (!res.ok || res.data === undefined) throw new Error(res.error?.message || fallback);
+  return res.data;
 }
 
 export function useAccounts() {

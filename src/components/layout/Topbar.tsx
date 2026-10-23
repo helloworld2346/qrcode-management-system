@@ -17,8 +17,6 @@ interface NavItemDef {
 const navItems: NavItemDef[] = [
   { to: "/dashboard", label: "Tổng quan", end: true },
   { to: "/dashboard/assets", label: "Tài sản" },
-  { to: "/dashboard/items", label: "Đồ vật" },
-  { to: "/dashboard/scanner", label: "Quét mã" },
   { to: "/dashboard/categories", label: "Danh mục", adminOnly: true },
   { to: "/dashboard/attributes", label: "Thuộc tính", adminOnly: true },
   { to: "/dashboard/departments", label: "Đơn vị", adminOnly: true },
