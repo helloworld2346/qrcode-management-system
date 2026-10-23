@@ -1,24 +1,23 @@
 import { http } from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
-import type { ApiResponse } from "@/types/api.types";
+import type { ApiResponse, ListResult } from "@/types/api.types";
 
-import type { Account, CreateAccountRequest } from "./accounts.types";
+import type { Account, CreateAccountRequest, ResetPasswordRequest } from "./accounts.types";
 
 export const accountsApi = {
-  list: async () => {
-    const { data } = await http.get<ApiResponse<Account[]>>(
+  list: async (page = 1, size = 100) => {
+    const { data } = await http.get<ApiResponse<ListResult<Account>>>(
       endpoints.accounts.list,
+      { params: { page, size } },
     );
     return data;
   },
-
   detail: async (id: string) => {
     const { data } = await http.get<ApiResponse<Account>>(
       endpoints.accounts.detail(id),
     );
     return data;
   },
-
   create: async (payload: CreateAccountRequest) => {
     const { data } = await http.post<ApiResponse<Account>>(
       endpoints.accounts.create,
@@ -26,10 +25,22 @@ export const accountsApi = {
     );
     return data;
   },
-
-  remove: async (id: string) => {
-    const { data } = await http.delete<ApiResponse<string>>(
-      endpoints.accounts.remove(id),
+  lock: async (id: string) => {
+    const { data } = await http.post<ApiResponse<Account>>(
+      endpoints.accounts.lock(id),
+    );
+    return data;
+  },
+  unlock: async (id: string) => {
+    const { data } = await http.post<ApiResponse<Account>>(
+      endpoints.accounts.unlock(id),
+    );
+    return data;
+  },
+  resetPassword: async (id: string, payload: ResetPasswordRequest) => {
+    const { data } = await http.post<ApiResponse<{ message: string }>>(
+      endpoints.accounts.resetPassword(id),
+      payload,
     );
     return data;
   },

@@ -12,8 +12,7 @@ import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { CategoryDetailPage } from "@/features/categories/pages/CategoryDetailPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
-import { ItemsPage } from "@/features/items/pages/ItemsPage";
-import { ScannerPage } from "@/features/scanner/pages/ScannerPage";
+import { DepartmentsPage } from "@/features/departments/pages/DepartmentsPage";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
@@ -41,8 +40,6 @@ export const router = createBrowserRouter([
       { path: "assets/:code", element: <AssetDetailPage /> },
       { path: "assets/:code/edit", element: <AssetEditPage /> },
       { path: "assets/:code/print", element: <AssetPrintPage /> },
-      { path: "scanner", element: <ScannerPage /> },
-      { path: "items", element: <ItemsPage /> },
       {
         path: "accounts",
         element: (
@@ -72,6 +69,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute allow="admin">
             <AttributesPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "departments",
+        element: (
+          <ProtectedRoute allow="admin">
+            <DepartmentsPage />
           </ProtectedRoute>
         ),
       },

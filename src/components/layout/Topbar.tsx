@@ -21,6 +21,7 @@ const navItems: NavItemDef[] = [
   { to: "/dashboard/scanner", label: "Quét mã" },
   { to: "/dashboard/categories", label: "Danh mục", adminOnly: true },
   { to: "/dashboard/attributes", label: "Thuộc tính", adminOnly: true },
+  { to: "/dashboard/departments", label: "Đơn vị", adminOnly: true },
   { to: "/dashboard/accounts", label: "Tài khoản", adminOnly: true },
   { to: "/dashboard/audit-log", label: "Nhật ký", adminOnly: true },
 ];

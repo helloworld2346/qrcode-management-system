@@ -4,16 +4,16 @@ import type {
   Attribute,
   CreateAttributeRequest,
 } from "@/features/attributes/attributes.types";
-import type { ApiResponse } from "@/types/api.types";
+import type { ApiResponse, ListResult } from "@/types/api.types";
 
 export const attributesApi = {
-  list: async () => {
-    const { data } = await http.get<ApiResponse<Attribute[]>>(
+  list: async (page = 1, size = 200) => {
+    const { data } = await http.get<ApiResponse<ListResult<Attribute>>>(
       endpoints.attributes.list,
+      { params: { page, size } },
     );
     return data;
   },
-
   create: async (payload: CreateAttributeRequest) => {
     const { data } = await http.post<ApiResponse<Attribute>>(
       endpoints.attributes.create,
@@ -21,9 +21,8 @@ export const attributesApi = {
     );
     return data;
   },
-
   remove: async (id: string) => {
-    const { data } = await http.delete<ApiResponse<string>>(
+    const { data } = await http.delete<ApiResponse<{ message: string }>>(
       endpoints.attributes.remove(id),
     );
     return data;

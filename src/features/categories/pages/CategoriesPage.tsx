@@ -9,31 +9,49 @@ import {
   useCreateCategory,
   useDeleteCategory,
 } from "@/features/categories/categories.hooks";
+import { errorMessage } from "@/types/api.types";
+
+const slugify = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 20);
 
 export function CategoriesPage() {
   const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [code, setCode] = useState("");
+  const [codeTouched, setCodeTouched] = useState(false);
+  const [err, setErr] = useState("");
 
   const { data: categories, isLoading, isError, error } = useCategories();
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
 
   const handleCreate = () => {
-    const categoryName = name.trim();
-    if (!categoryName) return;
+    setErr("");
+    const n = name.trim();
+    const c = (codeTouched ? code : slugify(n)).trim();
+    if (!n || !c) return;
     createCategory.mutate(
-      { categoryName, description: description.trim() },
+      { name: n, code: c },
       {
         onSuccess: () => {
           setName("");
-          setDescription("");
+          setCode("");
+          setCodeTouched(false);
         },
+        onError: (e) => setErr(errorMessage(e)),
       },
     );
   };
 
-  const handleDelete = (id: string, categoryName: string) => {
-    if (window.confirm(`Xóa danh mục "${categoryName}"?`)) {
+  const handleDelete = (id: string, catName: string) => {
+    if (window.confirm(`Xóa danh mục "${catName}"?`)) {
       deleteCategory.mutate(id);
     }
   };
@@ -41,16 +59,10 @@ export function CategoriesPage() {
   return (
     <div>
       <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
-        <div className="flex flex-wrap items-center">
-          <div className="mr-auto">
-            <h1 className="text-2xl font-bold tracking-tight text-text">
-              Danh mục
-            </h1>
-            <p className="mt-1 text-sm text-text text-opacity-60">
-              Quản lý loại tài sản và bộ thuộc tính.
-            </p>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-text">Danh mục</h1>
+        <p className="mt-1 text-sm text-text text-opacity-60">
+          Quản lý loại tài sản và bộ thuộc tính.
+        </p>
       </div>
 
       <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
@@ -62,11 +74,14 @@ export function CategoriesPage() {
               placeholder="Tên danh mục"
             />
           </div>
-          <div className="mb-3 mr-3 w-full sm:mb-0 sm:w-80">
+          <div className="mb-3 mr-3 w-full sm:mb-0 sm:w-48">
             <Input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Mô tả"
+              value={codeTouched ? code : slugify(name)}
+              onChange={(e) => {
+                setCodeTouched(true);
+                setCode(e.target.value);
+              }}
+              placeholder="Mã (VD: VK)"
             />
           </div>
           <Button
@@ -79,19 +94,15 @@ export function CategoriesPage() {
             Thêm danh mục
           </Button>
         </div>
-        {createCategory.isError ? (
-          <p className="mt-2 text-xs text-accent">
-            {createCategory.error.message}
-          </p>
-        ) : null}
+        {err && <p className="mt-2 text-xs text-accent">{err}</p>}
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left text-text text-opacity-60">
+              <th className="px-4 py-3 font-medium">Mã</th>
               <th className="px-4 py-3 font-medium">Tên danh mục</th>
-              <th className="px-4 py-3 font-medium">Mô tả</th>
               <th className="px-4 py-3 font-medium">Thuộc tính</th>
               <th className="px-4 py-3 font-medium">Thao tác</th>
             </tr>
@@ -99,40 +110,27 @@ export function CategoriesPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-8 text-center text-text text-opacity-60"
-                >
+                <td colSpan={4} className="px-4 py-8 text-center text-text text-opacity-60">
                   Đang tải...
                 </td>
               </tr>
             ) : isError ? (
               <tr>
                 <td colSpan={4} className="px-4 py-8 text-center text-accent">
-                  {error.message}
+                  {(error as Error).message}
                 </td>
               </tr>
             ) : !categories || categories.length === 0 ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="px-4 py-8 text-center text-text text-opacity-60"
-                >
+                <td colSpan={4} className="px-4 py-8 text-center text-text text-opacity-60">
                   Chưa có danh mục nào.
                 </td>
               </tr>
             ) : (
               categories.map((c) => (
-                <tr
-                  key={c.idCategory}
-                  className="border-b border-border last:border-b-0"
-                >
-                  <td className="px-4 py-3 font-medium text-text">
-                    {c.categoryName}
-                  </td>
-                  <td className="px-4 py-3 text-text text-opacity-80">
-                    {c.description || "—"}
-                  </td>
+                <tr key={c.id} className="border-b border-border last:border-b-0">
+                  <td className="px-4 py-3 font-medium text-text">{c.code}</td>
+                  <td className="px-4 py-3 text-text text-opacity-80">{c.name}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary">
                       {c.attributes?.length ?? 0} thuộc tính
@@ -141,7 +139,7 @@ export function CategoriesPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center">
                       <Link
-                        to={`/dashboard/categories/${c.idCategory}`}
+                        to={`/dashboard/categories/${c.id}`}
                         aria-label="Xem"
                         className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
                       >
@@ -151,9 +149,7 @@ export function CategoriesPage() {
                         type="button"
                         aria-label="Xóa"
                         disabled={deleteCategory.isPending}
-                        onClick={() =>
-                          handleDelete(c.idCategory, c.categoryName)
-                        }
+                        onClick={() => handleDelete(c.id, c.name)}
                         className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
                       >
                         <FiTrash2 size={15} />

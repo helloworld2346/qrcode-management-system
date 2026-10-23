@@ -12,20 +12,31 @@ import {
 } from "@/features/attributes/attributes.hooks";
 import {
   DATA_TYPES,
-  DEFAULT_VALIDATION_REGEX,
-  genAttributeCode,
   OPTION_TYPES,
   type DataType,
 } from "@/features/attributes/attributes.types";
-import { logger } from "@/utils/logger";
+import { errorMessage } from "@/types/api.types";
 
 const dataTypeOptions = DATA_TYPES.map((t) => ({ value: t, label: t }));
 
+const slugify = (name: string) =>
+  name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
 export function AttributesPage() {
-  const [attributeName, setAttributeName] = useState("");
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [codeTouched, setCodeTouched] = useState(false);
   const [dataType, setDataType] = useState<DataType>("TEXT");
   const [description, setDescription] = useState("");
   const [optionsInput, setOptionsInput] = useState("");
+  const [regex, setRegex] = useState("");
   const [formError, setFormError] = useState("");
 
   const { data: attributes, isLoading, isError, error } = useAttributes();
@@ -33,92 +44,63 @@ export function AttributesPage() {
   const deleteAttribute = useDeleteAttribute();
 
   const needsOptions = OPTION_TYPES.includes(dataType);
+  const needsRegex = dataType === "TEXT";
 
   const parsedOptions = useMemo(() => {
-    if (!needsOptions) return null;
-    const items = optionsInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    return items.length ? items : null;
+    if (!needsOptions) return undefined;
+    const items = optionsInput.split(",").map((s) => s.trim()).filter(Boolean);
+    return items.length ? items : undefined;
   }, [needsOptions, optionsInput]);
 
   const handleCreate = () => {
     setFormError("");
-    const trimmedName = attributeName.trim();
-    if (!trimmedName) {
-      setFormError("Vui lòng nhập tên thuộc tính.");
+    const trimmedName = name.trim();
+    const trimmedCode = (codeTouched ? code : slugify(trimmedName)).trim();
+    if (!trimmedName || !trimmedCode) {
+      setFormError("Vui lòng nhập tên và mã thuộc tính.");
       return;
     }
     if (needsOptions && !parsedOptions) {
-      setFormError("Kiểu SELECT / MULTI_SELECT cần nhập ít nhất 1 option.");
+      setFormError("Kiểu SELECT / MULTI_SELECT cần ít nhất 1 option.");
       return;
     }
-
     createAttribute.mutate(
       {
-        code: genAttributeCode(trimmedName),
-        attributeName: trimmedName,
-        dataType,
-        description: description.trim(),
-        validationRegex: DEFAULT_VALIDATION_REGEX[dataType],
-        options: parsedOptions ? JSON.stringify(parsedOptions) : null,
+        code: trimmedCode,
+        name: trimmedName,
+        data_type: dataType,
+        description: description.trim() || undefined,
+        validation_regex: regex.trim() || undefined,
+        options: parsedOptions,
       },
       {
         onSuccess: () => {
-          setAttributeName("");
+          setName("");
+          setCode("");
+          setCodeTouched(false);
           setDataType("TEXT");
           setDescription("");
           setOptionsInput("");
+          setRegex("");
         },
+        onError: (e) => setFormError(errorMessage(e)),
       },
     );
   };
 
-  const handleDelete = (id: string, name: string) => {
-    if (window.confirm(`Xóa thuộc tính "${name}"?`)) {
+  const handleDelete = (id: string, attrName: string) => {
+    if (window.confirm(`Xóa thuộc tính "${attrName}"?`)) {
       deleteAttribute.mutate(id);
-    }
-  };
-
-  const renderOptions = (raw: string | null) => {
-    if (!raw) return "—";
-    try {
-      const arr: unknown = JSON.parse(raw);
-      if (Array.isArray(arr)) {
-        return (
-          <span>
-            {arr.map((opt, i) => (
-              <span
-                key={i}
-                className="mb-1 mr-1 inline-block rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary"
-              >
-                {String(opt)}
-              </span>
-            ))}
-          </span>
-        );
-      }
-      return <span className="text-xs">{raw}</span>;
-    } catch (e) {
-      logger.warn("parse attribute options failed", e);
-      return <span className="text-xs">{raw}</span>;
     }
   };
 
   return (
     <div>
       <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
-        <div className="flex flex-wrap items-center">
-          <div className="mr-auto">
-            <h1 className="text-2xl font-bold tracking-tight text-text">
-              Thuộc tính
-            </h1>
-            <p className="mt-1 text-sm text-text text-opacity-60">
-              Kho thuộc tính tái sử dụng cho các danh mục.
-            </p>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-text">Thuộc tính</h1>
+        <p className="mt-1 text-sm text-text text-opacity-60">
+          Kho thuộc tính tái sử dụng cho các danh mục.
+        </p>
       </div>
 
       <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
@@ -126,16 +108,28 @@ export function AttributesPage() {
           Thêm thuộc tính
         </h2>
         <div className="flex flex-wrap">
-          <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2 lg:w-1/3">
+          <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2 lg:w-1/4">
             <FormField label="Tên thuộc tính" required>
               <Input
-                value={attributeName}
-                onChange={(e) => setAttributeName(e.target.value)}
-                placeholder="VD: Chất liệu"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="VD: Chủng loại"
               />
             </FormField>
           </div>
-          <div className="mb-3 w-full pl-0 sm:w-1/2 sm:pl-2 lg:w-1/3">
+          <div className="mb-3 w-full pl-0 sm:w-1/2 sm:pl-2 lg:w-1/4">
+            <FormField label="Mã (code)" required>
+              <Input
+                value={codeTouched ? code : slugify(name)}
+                onChange={(e) => {
+                  setCodeTouched(true);
+                  setCode(e.target.value);
+                }}
+                placeholder="chung_loai"
+              />
+            </FormField>
+          </div>
+          <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2 lg:w-1/4">
             <FormField label="Kiểu dữ liệu" required>
               <FormSelect
                 value={dataType}
@@ -144,7 +138,7 @@ export function AttributesPage() {
               />
             </FormField>
           </div>
-          <div className="mb-3 w-full pr-0 lg:w-1/3">
+          <div className="mb-3 w-full lg:w-1/4">
             <FormField label="Mô tả">
               <Input
                 value={description}
@@ -154,27 +148,31 @@ export function AttributesPage() {
             </FormField>
           </div>
 
-          {needsOptions ? (
+          {needsOptions && (
             <div className="mb-3 w-full">
               <FormField label="Options (phân tách bởi dấu phẩy)" required>
                 <Input
                   value={optionsInput}
                   onChange={(e) => setOptionsInput(e.target.value)}
-                  placeholder="Gỗ, Nhựa, Kim loại, Vải"
+                  placeholder="Súng ngắn, Súng trường, Súng máy"
                 />
               </FormField>
             </div>
-          ) : null}
+          )}
+          {needsRegex && (
+            <div className="mb-3 w-full">
+              <FormField label="Regex kiểm tra (tùy chọn)">
+                <Input
+                  value={regex}
+                  onChange={(e) => setRegex(e.target.value)}
+                  placeholder="^[A-Z0-9-]+$"
+                />
+              </FormField>
+            </div>
+          )}
         </div>
 
-        {formError ? (
-          <p className="mb-2 text-xs text-accent">{formError}</p>
-        ) : null}
-        {createAttribute.isError ? (
-          <p className="mb-2 text-xs text-accent">
-            {createAttribute.error.message}
-          </p>
-        ) : null}
+        {formError && <p className="mb-2 text-xs text-accent">{formError}</p>}
 
         <div className="flex justify-end">
           <Button
@@ -204,55 +202,53 @@ export function AttributesPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-8 text-center text-text text-opacity-60"
-                >
+                <td colSpan={6} className="px-4 py-8 text-center text-text text-opacity-60">
                   Đang tải...
                 </td>
               </tr>
             ) : isError ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-accent">
-                  {error.message}
+                  {(error as Error).message}
                 </td>
               </tr>
             ) : !attributes || attributes.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-8 text-center text-text text-opacity-60"
-                >
+                <td colSpan={6} className="px-4 py-8 text-center text-text text-opacity-60">
                   Chưa có thuộc tính nào.
                 </td>
               </tr>
             ) : (
               attributes.map((a) => (
-                <tr
-                  key={a.idAttribute}
-                  className="border-b border-border last:border-b-0"
-                >
+                <tr key={a.id} className="border-b border-border last:border-b-0">
                   <td className="px-4 py-3 font-medium text-text">{a.code}</td>
-                  <td className="px-4 py-3 text-text text-opacity-80">
-                    {a.attributeName}
-                  </td>
+                  <td className="px-4 py-3 text-text text-opacity-80">{a.name}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary">
-                      {a.dataType}
+                      {a.data_type}
                     </span>
                   </td>
-                  <td className="px-4 py-3">{renderOptions(a.options)}</td>
+                  <td className="px-4 py-3">
+                    {a.options?.length
+                      ? a.options.map((o) => (
+                          <span
+                            key={o}
+                            className="mb-1 mr-1 inline-block rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary"
+                          >
+                            {o}
+                          </span>
+                        ))
+                      : "—"}
+                  </td>
                   <td className="px-4 py-3 text-xs text-text text-opacity-60">
-                    {a.validationRegex || "—"}
+                    {a.validation_regex || "—"}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       type="button"
                       aria-label="Xóa"
                       disabled={deleteAttribute.isPending}
-                      onClick={() =>
-                        handleDelete(a.idAttribute, a.attributeName)
-                      }
+                      onClick={() => handleDelete(a.id, a.name)}
                       className="flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
                     >
                       <FiTrash2 size={15} />

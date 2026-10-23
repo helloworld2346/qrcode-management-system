@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { FiArrowLeft, FiPlus } from "react-icons/fi";
+import { FiArrowLeft, FiPlus, FiTrash2 } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
@@ -10,53 +10,59 @@ import { useAttributes } from "@/features/attributes/attributes.hooks";
 import {
   useAddCategoryAttribute,
   useCategory,
+  useRemoveCategoryAttribute,
 } from "@/features/categories/categories.hooks";
+import { errorMessage } from "@/types/api.types";
 
 export function CategoryDetailPage() {
   const { id = "" } = useParams();
   const { data: category, isLoading, isError, error } = useCategory(id);
   const { data: attributes, isLoading: loadingAttrs } = useAttributes();
-  const addAttribute = useAddCategoryAttribute();
+  const addAttribute = useAddCategoryAttribute(id);
+  const removeAttribute = useRemoveCategoryAttribute(id);
 
-  const [attribute, setAttribute] = useState("");
+  const [attributeId, setAttributeId] = useState("");
   const [required, setRequired] = useState(false);
   const [sortOrder, setSortOrder] = useState("1");
   const [defaultValue, setDefaultValue] = useState("");
   const [formError, setFormError] = useState("");
 
+  const attached = useMemo(
+    () => new Set((category?.attributes ?? []).map((a) => a.attribute_id)),
+    [category],
+  );
   const attributeOptions = useMemo(
     () =>
-      (attributes ?? []).map((a) => ({
-        value: a.idAttribute,
-        label: `${a.attributeName} (${a.code})`,
-      })),
-    [attributes],
+      (attributes ?? [])
+        .filter((a) => !attached.has(a.id))
+        .map((a) => ({
+          value: a.id,
+          label: `${a.name} (${a.code})`,
+        })),
+    [attributes, attached],
   );
 
   const handleAdd = () => {
     setFormError("");
-    if (!attribute) {
+    if (!attributeId) {
       setFormError("Vui lòng chọn thuộc tính.");
       return;
     }
     addAttribute.mutate(
       {
-        id,
-        payload: {
-          category: id,
-          attribute,
-          required,
-          sortOrder: Number(sortOrder) || 0,
-          defaultValue: defaultValue.trim(),
-        },
+        attribute_id: attributeId,
+        is_required: required,
+        sort_order: Number(sortOrder) || 0,
+        default_value: defaultValue.trim() || undefined,
       },
       {
         onSuccess: () => {
-          setAttribute("");
+          setAttributeId("");
           setRequired(false);
           setSortOrder("1");
           setDefaultValue("");
         },
+        onError: (e) => setFormError(errorMessage(e)),
       },
     );
   };
@@ -73,7 +79,7 @@ export function CategoryDetailPage() {
     return (
       <div className="rounded-2xl border border-border bg-surface px-5 py-10 text-center">
         <p className="mb-3 text-sm text-accent">
-          {error?.message || `Không tìm thấy danh mục "${id}".`}
+          {(error as Error)?.message || `Không tìm thấy danh mục "${id}".`}
         </p>
         <Link
           to="/dashboard/categories"
@@ -87,7 +93,6 @@ export function CategoryDetailPage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
         <Link
           to="/dashboard/categories"
@@ -97,14 +102,13 @@ export function CategoryDetailPage() {
           Danh mục
         </Link>
         <h1 className="text-2xl font-bold tracking-tight text-text">
-          {category.categoryName}
+          {category.name}
         </h1>
         <p className="mt-1 text-sm text-text text-opacity-60">
-          {category.description || "Không có mô tả."}
+          Mã danh mục: {category.code}
         </p>
       </div>
 
-      {/* Form gắn thuộc tính */}
       <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text text-opacity-60">
           Thêm thuộc tính vào danh mục
@@ -113,9 +117,9 @@ export function CategoryDetailPage() {
           <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2 lg:w-1/3">
             <FormField label="Thuộc tính" required>
               <FormSelect
-                value={attribute}
+                value={attributeId}
                 options={attributeOptions}
-                onChange={setAttribute}
+                onChange={setAttributeId}
                 placeholder={loadingAttrs ? "Đang tải..." : "Chọn thuộc tính"}
               />
             </FormField>
@@ -160,7 +164,7 @@ export function CategoryDetailPage() {
             <Button
               type="button"
               className="ml-3 flex items-center rounded-lg"
-              disabled={!attribute || addAttribute.isPending}
+              disabled={!attributeId || addAttribute.isPending}
               onClick={handleAdd}
             >
               <FiPlus className="mr-2" size={15} />
@@ -168,17 +172,9 @@ export function CategoryDetailPage() {
             </Button>
           </div>
         </div>
-        {formError ? (
-          <p className="mt-1 text-xs text-accent">{formError}</p>
-        ) : null}
-        {addAttribute.isError ? (
-          <p className="mt-1 text-xs text-accent">
-            {addAttribute.error.message}
-          </p>
-        ) : null}
+        {formError && <p className="mt-1 text-xs text-accent">{formError}</p>}
       </div>
 
-      {/* Bảng thuộc tính đã gắn */}
       <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
         <table className="min-w-full text-sm">
           <thead>
@@ -189,43 +185,32 @@ export function CategoryDetailPage() {
               <th className="px-4 py-3 font-medium">Kiểu</th>
               <th className="px-4 py-3 font-medium">Bắt buộc</th>
               <th className="px-4 py-3 font-medium">Mặc định</th>
+              <th className="px-4 py-3 font-medium"></th>
             </tr>
           </thead>
           <tbody>
             {!category.attributes || category.attributes.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-8 text-center text-text text-opacity-60"
-                >
+                <td colSpan={7} className="px-4 py-8 text-center text-text text-opacity-60">
                   Chưa có thuộc tính nào.
                 </td>
               </tr>
             ) : (
               category.attributes
                 .slice()
-                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .sort((a, b) => a.sort_order - b.sort_order)
                 .map((attr, i) => (
-                  <tr
-                    key={attr.idCategoryAttribute}
-                    className="border-b border-border last:border-b-0"
-                  >
-                    <td className="px-4 py-3 text-text text-opacity-60">
-                      {i + 1}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-text">
-                      {attr.code}
-                    </td>
-                    <td className="px-4 py-3 text-text text-opacity-80">
-                      {attr.attributeName}
-                    </td>
+                  <tr key={attr.attribute_id} className="border-b border-border last:border-b-0">
+                    <td className="px-4 py-3 text-text text-opacity-60">{i + 1}</td>
+                    <td className="px-4 py-3 font-medium text-text">{attr.code}</td>
+                    <td className="px-4 py-3 text-text text-opacity-80">{attr.name}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary">
-                        {attr.dataType}
+                        {attr.data_type}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {attr.required ? (
+                      {attr.is_required ? (
                         <span className="inline-flex items-center rounded-full bg-accent bg-opacity-10 px-2 py-0.5 text-xs font-medium text-accent">
                           Bắt buộc
                         </span>
@@ -234,7 +219,18 @@ export function CategoryDetailPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-text text-opacity-60">
-                      {attr.defaultValue || "—"}
+                      {attr.default_value || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        type="button"
+                        aria-label="Gỡ"
+                        disabled={removeAttribute.isPending}
+                        onClick={() => removeAttribute.mutate(attr.attribute_id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
+                      >
+                        <FiTrash2 size={15} />
+                      </button>
                     </td>
                   </tr>
                 ))
