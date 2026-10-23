@@ -13,6 +13,8 @@ import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { CategoryDetailPage } from "@/features/categories/pages/CategoryDetailPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { DepartmentsPage } from "@/features/departments/pages/DepartmentsPage";
+import { InventoryPage } from "@/features/inventory/pages/InventoryPage";
+import { ScannerPage } from "@/features/scanner/pages/ScannerPage";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
@@ -40,6 +42,8 @@ export const router = createBrowserRouter([
       { path: "assets/:code", element: <AssetDetailPage /> },
       { path: "assets/:code/edit", element: <AssetEditPage /> },
       { path: "assets/:code/print", element: <AssetPrintPage /> },
+      { path: "scanner", element: <ScannerPage /> },
+      { path: "inventory", element: <InventoryPage /> },
       {
         path: "accounts",
         element: (
