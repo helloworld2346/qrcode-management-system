@@ -1,4 +1,6 @@
 import { useState } from "react";
+
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FiEye, FiPlus, FiTrash2 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
@@ -27,6 +29,7 @@ export function CategoriesPage() {
   const [code, setCode] = useState("");
   const [codeTouched, setCodeTouched] = useState(false);
   const [err, setErr] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: categories, isLoading, isError, error } = useCategories();
   const createCategory = useCreateCategory();
@@ -50,10 +53,11 @@ export function CategoriesPage() {
     );
   };
 
-  const handleDelete = (id: string, catName: string) => {
-    if (window.confirm(`Xóa danh mục "${catName}"?`)) {
-      deleteCategory.mutate(id);
-    }
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    deleteCategory.mutate(deleteTarget.id, {
+      onSettled: () => setDeleteTarget(null),
+    });
   };
 
   return (
@@ -149,7 +153,7 @@ export function CategoriesPage() {
                         type="button"
                         aria-label="Xóa"
                         disabled={deleteCategory.isPending}
-                        onClick={() => handleDelete(c.id, c.name)}
+                        onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
                         className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
                       >
                         <FiTrash2 size={15} />
@@ -162,6 +166,16 @@ export function CategoriesPage() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Xóa danh mục"
+        message={deleteTarget ? `Xóa danh mục "${deleteTarget.name}"?` : ""}
+        confirmLabel="Xóa"
+        loading={deleteCategory.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

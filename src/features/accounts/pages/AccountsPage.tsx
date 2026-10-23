@@ -29,6 +29,10 @@ export function AccountsPage() {
   });
 
   const [formOpen, setFormOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState<Account | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetErr, setResetErr] = useState("");
+  const [lockTarget, setLockTarget] = useState<Account | null>(null);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
@@ -69,18 +73,33 @@ export function AccountsPage() {
     );
   };
 
-  const toggleLock = (a: Account) => {
-    if (a.is_locked) unlockMut.mutate(a.id);
-    else lockMut.mutate(a.id);
+  const openReset = (a: Account) => {
+    setResetTarget(a);
+    setNewPassword("");
+    setResetErr("");
   };
 
-  const onResetPassword = (a: Account) => {
-    const pw = window.prompt(`Mật khẩu mới cho "${a.username}":`);
-    if (pw && pw.length >= 6) {
-      resetMut.mutate({ id: a.id, newPassword: pw });
-    } else if (pw !== null) {
-      window.alert("Mật khẩu phải có ít nhất 6 ký tự.");
+  const submitReset = (e: FormEvent) => {
+    e.preventDefault();
+    if (!resetTarget) return;
+    if (newPassword.length < 6) {
+      setResetErr("Mật khẩu phải có ít nhất 6 ký tự.");
+      return;
     }
+    resetMut.mutate(
+      { id: resetTarget.id, newPassword },
+      {
+        onSuccess: () => setResetTarget(null),
+        onError: (e2) => setResetErr(errorMessage(e2)),
+      },
+    );
+  };
+
+  const submitLock = () => {
+    if (!lockTarget) return;
+    const done = () => setLockTarget(null);
+    if (lockTarget.is_locked) unlockMut.mutate(lockTarget.id, { onSettled: done });
+    else lockMut.mutate(lockTarget.id, { onSettled: done });
   };
 
   return (
@@ -237,7 +256,7 @@ export function AccountsPage() {
                         type="button"
                         aria-label="Đặt lại mật khẩu"
                         title="Đặt lại mật khẩu"
-                        onClick={() => onResetPassword(a)}
+                        onClick={() => openReset(a)}
                         disabled={resetMut.isPending}
                         className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary disabled:opacity-50"
                       >
@@ -247,7 +266,7 @@ export function AccountsPage() {
                         type="button"
                         aria-label={a.is_locked ? "Mở khóa" : "Khóa"}
                         title={a.is_locked ? "Mở khóa" : "Khóa"}
-                        onClick={() => toggleLock(a)}
+                        onClick={() => setLockTarget(a)}
                         disabled={lockMut.isPending || unlockMut.isPending}
                         className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
                       >
@@ -261,6 +280,92 @@ export function AccountsPage() {
           </tbody>
         </table>
       </div>
+
+      {resetTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
+          onClick={() => setResetTarget(null)}
+        >
+          <form
+            onSubmit={submitReset}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 shadow-xl"
+          >
+            <h2 className="mb-1 text-base font-semibold text-text">Đặt lại mật khẩu</h2>
+            <p className="mb-4 text-sm text-text text-opacity-60">
+              Tài khoản <span className="font-medium text-text">{resetTarget.username}</span>
+            </p>
+            <FormField label="Mật khẩu mới" required>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoFocus
+                required
+              />
+            </FormField>
+            {resetErr && <p className="mt-2 text-xs text-accent">{resetErr}</p>}
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setResetTarget(null)}
+                className="mr-2 rounded-lg px-4 py-2 text-sm font-medium text-text text-opacity-70 transition-colors hover:bg-primary hover:bg-opacity-10"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={resetMut.isPending}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+              >
+                {resetMut.isPending ? "Đang lưu..." : "Đặt lại"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {lockTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
+          onClick={() => setLockTarget(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 shadow-xl"
+          >
+            <h2 className="mb-1 text-base font-semibold text-text">
+              {lockTarget.is_locked ? "Mở khóa tài khoản" : "Khóa tài khoản"}
+            </h2>
+            <p className="mb-4 text-sm text-text text-opacity-60">
+              {lockTarget.is_locked
+                ? `Mở khóa cho "${lockTarget.username}"?`
+                : `Khóa tài khoản "${lockTarget.username}"? Người này sẽ không đăng nhập được.`}
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setLockTarget(null)}
+                className="mr-2 rounded-lg px-4 py-2 text-sm font-medium text-text text-opacity-70 transition-colors hover:bg-primary hover:bg-opacity-10"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={submitLock}
+                disabled={lockMut.isPending || unlockMut.isPending}
+                className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
+              >
+                {lockMut.isPending || unlockMut.isPending
+                  ? "Đang xử lý..."
+                  : lockTarget.is_locked
+                    ? "Mở khóa"
+                    : "Khóa"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

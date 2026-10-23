@@ -3,6 +3,7 @@ import { useState } from "react";
 import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import {
   departmentsApi,
@@ -27,6 +28,7 @@ export function DepartmentsPage() {
   const [code, setCode] = useState("");
   const [codeTouched, setCodeTouched] = useState(false);
   const [editing, setEditing] = useState<Department | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Department | null>(null);
   const [err, setErr] = useState("");
 
   const { data: departments, isLoading, isError, error } = useQuery({
@@ -77,8 +79,11 @@ export function DepartmentsPage() {
     setCodeTouched(true);
   };
 
-  const handleDelete = (d: Department) => {
-    if (window.confirm(`Xóa đơn vị "${d.name}"?`)) delMut.mutate(d.id);
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    delMut.mutate(deleteTarget.id, {
+      onSettled: () => setDeleteTarget(null),
+    });
   };
 
   return (
@@ -187,7 +192,7 @@ export function DepartmentsPage() {
                         type="button"
                         aria-label="Xóa"
                         disabled={delMut.isPending}
-                        onClick={() => handleDelete(d)}
+                        onClick={() => setDeleteTarget(d)}
                         className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
                       >
                         <FiTrash2 size={15} />
@@ -200,6 +205,16 @@ export function DepartmentsPage() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Xóa đơn vị"
+        message={deleteTarget ? `Xóa đơn vị "${deleteTarget.name}"?` : ""}
+        confirmLabel="Xóa"
+        loading={delMut.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

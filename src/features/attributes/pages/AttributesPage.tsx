@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
@@ -18,6 +19,22 @@ import {
 import { errorMessage } from "@/types/api.types";
 
 const dataTypeOptions = DATA_TYPES.map((t) => ({ value: t, label: t }));
+
+const REGEX_PRESETS = [
+  { value: "", label: "Không kiểm tra" },
+  { value: "^[A-Za-z0-9-]+$", label: "Chỉ chữ và số (không dấu, cho phép gạch)" },
+  { value: "^[0-9]+$", label: "Chỉ số" },
+  { value: "^[A-Z0-9-]+$", label: "Số seri (IN HOA + số + gạch)" },
+  { value: "^\\d{4}$", label: "Năm 4 chữ số" },
+  { value: "^\\d{2}/\\d{2}/\\d{4}$", label: "Ngày dd/mm/yyyy" },
+  { value: "^0\\d{9,10}$", label: "Số điện thoại (0 + 9-10 số)" },
+  { value: "__custom__", label: "Tự nhập regex..." },
+];
+
+const regexOptions = REGEX_PRESETS.map((p) => ({
+  value: p.value,
+  label: p.label,
+}));
 
 const slugify = (name: string) =>
   name
@@ -36,8 +53,11 @@ export function AttributesPage() {
   const [dataType, setDataType] = useState<DataType>("TEXT");
   const [description, setDescription] = useState("");
   const [optionsInput, setOptionsInput] = useState("");
+  const [regexPreset, setRegexPreset] = useState("");
   const [regex, setRegex] = useState("");
+  const isCustomRegex = regexPreset === "__custom__";
   const [formError, setFormError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const { data: attributes, isLoading, isError, error } = useAttributes();
   const createAttribute = useCreateAttribute();
@@ -70,7 +90,8 @@ export function AttributesPage() {
         name: trimmedName,
         data_type: dataType,
         description: description.trim() || undefined,
-        validation_regex: regex.trim() || undefined,
+        validation_regex:
+          (isCustomRegex ? regex.trim() : regexPreset) || undefined,
         options: parsedOptions,
       },
       {
@@ -81,6 +102,7 @@ export function AttributesPage() {
           setDataType("TEXT");
           setDescription("");
           setOptionsInput("");
+          setRegexPreset("");
           setRegex("");
         },
         onError: (e) => setFormError(errorMessage(e)),
@@ -88,10 +110,11 @@ export function AttributesPage() {
     );
   };
 
-  const handleDelete = (id: string, attrName: string) => {
-    if (window.confirm(`Xóa thuộc tính "${attrName}"?`)) {
-      deleteAttribute.mutate(id);
-    }
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    deleteAttribute.mutate(deleteTarget.id, {
+      onSettled: () => setDeleteTarget(null),
+    });
   };
 
   return (
@@ -160,8 +183,19 @@ export function AttributesPage() {
             </div>
           )}
           {needsRegex && (
-            <div className="mb-3 w-full">
-              <FormField label="Regex kiểm tra (tùy chọn)">
+            <div className="mb-3 w-full sm:w-1/2">
+              <FormField label="Kiểm tra định dạng (tùy chọn)">
+                <FormSelect
+                  value={regexPreset}
+                  options={regexOptions}
+                  onChange={setRegexPreset}
+                />
+              </FormField>
+            </div>
+          )}
+          {needsRegex && isCustomRegex && (
+            <div className="mb-3 w-full sm:w-1/2">
+              <FormField label="Regex tự nhập" required>
                 <Input
                   value={regex}
                   onChange={(e) => setRegex(e.target.value)}
@@ -248,7 +282,7 @@ export function AttributesPage() {
                       type="button"
                       aria-label="Xóa"
                       disabled={deleteAttribute.isPending}
-                      onClick={() => handleDelete(a.id, a.name)}
+                      onClick={() => setDeleteTarget({ id: a.id, name: a.name })}
                       className="flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
                     >
                       <FiTrash2 size={15} />
@@ -260,6 +294,16 @@ export function AttributesPage() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Xóa thuộc tính"
+        message={deleteTarget ? `Xóa thuộc tính "${deleteTarget.name}"?` : ""}
+        confirmLabel="Xóa"
+        loading={deleteAttribute.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

@@ -4,16 +4,17 @@ import { FiCheckCircle, FiPlus, FiSearch } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
-import { useAuthStore } from "@/store/auth.store";
 import { categoriesApi } from "@/features/categories/categories.api";
 import { departmentsApi } from "@/features/departments/departments.api";
 import {
   inventoryApi,
   type InventorySession,
 } from "@/features/inventory/inventory.api";
+import { useAuthStore } from "@/store/auth.store";
 import { pickData, errorMessage } from "@/types/api.types";
 
 const keys = {
@@ -27,12 +28,15 @@ export function InventoryPage() {
   const isAdmin = user?.role === "admin";
 
   const [name, setName] = useState("");
-  const [scopeType, setScopeType] = useState<"DEPARTMENT" | "CATEGORY">("DEPARTMENT");
+  const [scopeType, setScopeType] = useState<"DEPARTMENT" | "CATEGORY">(
+    "DEPARTMENT",
+  );
   const [scopeId, setScopeId] = useState("");
   const [createErr, setCreateErr] = useState("");
   const [active, setActive] = useState<InventorySession | null>(null);
   const [scanCode, setScanCode] = useState("");
   const [scanMsg, setScanMsg] = useState("");
+  const [closeTarget, setCloseTarget] = useState<InventorySession | null>(null);
 
   const { data: sessions, isLoading } = useQuery({
     queryKey: keys.sessions,
@@ -41,12 +45,14 @@ export function InventoryPage() {
   const { data: departments } = useQuery({
     queryKey: ["departments"],
     enabled: scopeType === "DEPARTMENT" && isAdmin,
-    queryFn: async () => pickData(await departmentsApi.list(1, 100))?.items ?? [],
+    queryFn: async () =>
+      pickData(await departmentsApi.list(1, 100))?.items ?? [],
   });
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     enabled: scopeType === "CATEGORY",
-    queryFn: async () => pickData(await categoriesApi.list(1, 100))?.items ?? [],
+    queryFn: async () =>
+      pickData(await categoriesApi.list(1, 100))?.items ?? [],
   });
   const { data: report, refetch: refetchReport } = useQuery({
     queryKey: keys.report(active?.id ?? ""),
@@ -59,10 +65,14 @@ export function InventoryPage() {
       const res = await inventoryApi.create({
         name: name.trim(),
         scope_type: scopeType,
-        scope_id: scopeType === "DEPARTMENT" && !isAdmin ? user?.departmentId ?? "" : scopeId,
+        scope_id:
+          scopeType === "DEPARTMENT" && !isAdmin
+            ? user?.departmentId ?? ""
+            : scopeId,
       });
       const d = pickData(res);
-      if (!res.ok || !d) throw new Error(res.error?.message || "Tạo phiên thất bại");
+      if (!res.ok || !d)
+        throw new Error(res.error?.message || "Tạo phiên thất bại");
       return d;
     },
     onSuccess: (s) => {
@@ -107,8 +117,14 @@ export function InventoryPage() {
 
   const scopeOptions =
     scopeType === "DEPARTMENT"
-      ? (departments ?? []).map((d) => ({ value: d.id, label: `${d.name} (${d.code})` }))
-      : (categories ?? []).map((c) => ({ value: c.id, label: `${c.name} (${c.code})` }));
+      ? (departments ?? []).map((d) => ({
+          value: d.id,
+          label: `${d.name} (${d.code})`,
+        }))
+      : (categories ?? []).map((c) => ({
+          value: c.id,
+          label: `${c.name} (${c.code})`,
+        }));
 
   return (
     <div>
@@ -125,7 +141,11 @@ export function InventoryPage() {
         </h2>
         <div className="flex flex-wrap items-end gap-3">
           <FormField label="Tên phiên" required className="w-64">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Kiểm kê Q4" />
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Kiểm kê Q4"
+            />
           </FormField>
           <FormField label="Phạm vi" required className="w-44">
             <FormSelect
@@ -141,7 +161,11 @@ export function InventoryPage() {
             />
           </FormField>
           {(isAdmin || scopeType === "CATEGORY") && (
-            <FormField label={scopeType === "DEPARTMENT" ? "Đơn vị" : "Danh mục"} required className="w-56">
+            <FormField
+              label={scopeType === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}
+              required
+              className="w-56"
+            >
               <FormSelect
                 value={scopeId}
                 onChange={setScopeId}
@@ -180,13 +204,19 @@ export function InventoryPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-text text-opacity-60">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
                   Đang tải...
                 </td>
               </tr>
             ) : !sessions || sessions.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-text text-opacity-60">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
                   Chưa có phiên kiểm kê nào.
                 </td>
               </tr>
@@ -200,7 +230,8 @@ export function InventoryPage() {
                 >
                   <td className="px-4 py-3 font-medium text-text">{s.name}</td>
                   <td className="px-4 py-3 text-text text-opacity-70">
-                    {s.scope_type === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}: {s.scope_id}
+                    {s.scope_type === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}:{" "}
+                    {s.scope_id}
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -229,9 +260,7 @@ export function InventoryPage() {
                         <button
                           type="button"
                           disabled={closeMut.isPending}
-                          onClick={() => {
-                            if (window.confirm(`Đóng phiên "${s.name}"?`)) closeMut.mutate(s.id);
-                          }}
+                          onClick={() => setCloseTarget(s)}
                           className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-text hover:border-accent disabled:opacity-50"
                         >
                           Đóng phiên
@@ -258,7 +287,8 @@ export function InventoryPage() {
                 value={scanCode}
                 onChange={(e) => setScanCode(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && scanCode.trim()) scanMut.mutate(scanCode.trim());
+                  if (e.key === "Enter" && scanCode.trim())
+                    scanMut.mutate(scanCode.trim());
                 }}
                 placeholder="Nhập/quét mã tài sản..."
                 className="w-72"
@@ -285,10 +315,15 @@ export function InventoryPage() {
                 <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
                   {(report.scanned_ok ?? []).map((s) => (
                     <li key={s.id}>
-                      <Link to={`/dashboard/assets/${s.asset_code}`} className="text-primary hover:underline">
+                      <Link
+                        to={`/dashboard/assets/${s.asset_code}`}
+                        className="text-primary hover:underline"
+                      >
                         {s.asset_code}
                       </Link>{" "}
-                      <span className="text-text text-opacity-70">— {s.asset_name}</span>
+                      <span className="text-text text-opacity-70">
+                        — {s.asset_name}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -300,10 +335,15 @@ export function InventoryPage() {
                 <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
                   {(report.missing ?? []).map((s) => (
                     <li key={s.asset_id}>
-                      <Link to={`/dashboard/assets/${s.asset_code}`} className="text-primary hover:underline">
+                      <Link
+                        to={`/dashboard/assets/${s.asset_code}`}
+                        className="text-primary hover:underline"
+                      >
                         {s.asset_code}
                       </Link>{" "}
-                      <span className="text-text text-opacity-70">— {s.asset_name}</span>
+                      <span className="text-text text-opacity-70">
+                        — {s.asset_name}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -315,10 +355,15 @@ export function InventoryPage() {
                 <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
                   {(report.unexpected ?? []).map((s) => (
                     <li key={s.id}>
-                      <Link to={`/dashboard/assets/${s.asset_code}`} className="text-primary hover:underline">
+                      <Link
+                        to={`/dashboard/assets/${s.asset_code}`}
+                        className="text-primary hover:underline"
+                      >
                         {s.asset_code}
                       </Link>{" "}
-                      <span className="text-text text-opacity-70">— {s.asset_name}</span>
+                      <span className="text-text text-opacity-70">
+                        — {s.asset_name}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -327,6 +372,25 @@ export function InventoryPage() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!closeTarget}
+        title="Đóng phiên kiểm kê"
+        message={
+          closeTarget
+            ? `Đóng phiên "${closeTarget.name}"? Sau khi đóng không quét thêm được.`
+            : ""
+        }
+        confirmLabel="Đóng phiên"
+        loading={closeMut.isPending}
+        onConfirm={() => {
+          if (closeTarget)
+            closeMut.mutate(closeTarget.id, {
+              onSettled: () => setCloseTarget(null),
+            });
+        }}
+        onCancel={() => setCloseTarget(null)}
+      />
     </div>
   );
 }
