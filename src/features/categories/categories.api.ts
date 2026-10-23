@@ -8,10 +8,10 @@ import type {
 import type { ApiResponse, ListResult } from "@/types/api.types";
 
 export const categoriesApi = {
-  list: async (page = 1, size = 100) => {
+  list: async (page = 1, size = 100, q?: string) => {
     const { data } = await http.get<ApiResponse<ListResult<Category>>>(
       endpoints.categories.list,
-      { params: { page, size } },
+      { params: { page, size, q: q || undefined } },
     );
     return data;
   },

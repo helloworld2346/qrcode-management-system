@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
+import { Pagination } from "@/components/ui/Pagination";
+import { SearchInput } from "@/components/ui/SearchInput";
 import {
   useCategories,
   useCreateCategory,
@@ -28,10 +30,30 @@ export function CategoriesPage() {
   const [code, setCode] = useState("");
   const [codeTouched, setCodeTouched] = useState(false);
   const [err, setErr] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [deleteErr, setDeleteErr] = useState("");
 
-  const { data: categories, isLoading, isError, error } = useCategories();
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const { data, isLoading, isError, error } = useCategories({
+    q: query || undefined,
+    page,
+    size: pageSize,
+  });
+  const categories = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const handleQuery = (v: string) => {
+    setQuery(v);
+    setPage(1);
+  };
+
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
 
@@ -71,11 +93,21 @@ export function CategoriesPage() {
 
   return (
     <div>
-      <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
-        <h1 className="text-2xl font-bold tracking-tight text-text">Danh mục</h1>
-        <p className="mt-1 text-sm text-text text-opacity-60">
-          Quản lý loại tài sản và bộ thuộc tính.
-        </p>
+      <div className="mb-6 flex flex-wrap items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4">
+        <div className="mb-2 mr-4">
+          <h1 className="text-2xl font-bold tracking-tight text-text">
+            Danh mục
+          </h1>
+          <p className="mt-1 text-sm text-text text-opacity-60">
+            Quản lý loại tài sản và bộ thuộc tính.
+          </p>
+        </div>
+        <SearchInput
+          value={query}
+          onChange={handleQuery}
+          placeholder="Tìm theo tên hoặc mã..."
+          className="mb-2 w-64"
+        />
       </div>
 
       <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
@@ -123,7 +155,10 @@ export function CategoriesPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-text text-opacity-60">
+                <td
+                  colSpan={4}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
                   Đang tải...
                 </td>
               </tr>
@@ -133,17 +168,27 @@ export function CategoriesPage() {
                   {(error as Error).message}
                 </td>
               </tr>
-            ) : !categories || categories.length === 0 ? (
+            ) : categories.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-text text-opacity-60">
-                  Chưa có danh mục nào.
+                <td
+                  colSpan={4}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
+                  {query
+                    ? "Không tìm thấy danh mục nào."
+                    : "Chưa có danh mục nào."}
                 </td>
               </tr>
             ) : (
               categories.map((c) => (
-                <tr key={c.id} className="border-b border-border last:border-b-0">
+                <tr
+                  key={c.id}
+                  className="border-b border-border last:border-b-0"
+                >
                   <td className="px-4 py-3 font-medium text-text">{c.code}</td>
-                  <td className="px-4 py-3 text-text text-opacity-80">{c.name}</td>
+                  <td className="px-4 py-3 text-text text-opacity-80">
+                    {c.name}
+                  </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary">
                       {c.attributes?.length ?? 0} thuộc tính
@@ -162,7 +207,9 @@ export function CategoriesPage() {
                         type="button"
                         aria-label="Xóa"
                         disabled={deleteCategory.isPending}
-                        onClick={() => setDeleteTarget({ id: c.id, name: c.name })}
+                        onClick={() =>
+                          setDeleteTarget({ id: c.id, name: c.name })
+                        }
                         className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
                       >
                         <FiTrash2 size={15} />
@@ -174,6 +221,20 @@ export function CategoriesPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={total}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => {
+            setPageSize(s);
+            setPage(1);
+          }}
+        />
       </div>
 
       <ConfirmDialog

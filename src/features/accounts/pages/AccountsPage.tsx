@@ -5,6 +5,8 @@ import { FiKey, FiLock, FiPlus, FiUnlock, FiX } from "react-icons/fi";
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
+import { Pagination } from "@/components/ui/Pagination";
+import { SearchInput } from "@/components/ui/SearchInput";
 import {
   useAccounts,
   useCreateAccount,
@@ -17,7 +19,24 @@ import { departmentsApi } from "@/features/departments/departments.api";
 import { pickData, errorMessage } from "@/types/api.types";
 
 export function AccountsPage() {
-  const { data: accounts = [], isLoading, isError, error } = useAccounts();
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const { data, isLoading, isError, error } = useAccounts({
+    q: query || undefined,
+    page,
+    size: pageSize,
+  });
+  const accounts = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const handleQuery = (v: string) => {
+    setQuery(v);
+    setPage(1);
+  };
+
   const createAccount = useCreateAccount();
   const lockMut = useLockAccount();
   const unlockMut = useUnlockAccount();
@@ -25,7 +44,8 @@ export function AccountsPage() {
 
   const { data: departments } = useQuery({
     queryKey: ["departments"],
-    queryFn: async () => pickData(await departmentsApi.list(1, 100))?.items ?? [],
+    queryFn: async () =>
+      pickData(await departmentsApi.list(1, 100))?.items ?? [],
   });
 
   const [formOpen, setFormOpen] = useState(false);
@@ -98,7 +118,8 @@ export function AccountsPage() {
   const submitLock = () => {
     if (!lockTarget) return;
     const done = () => setLockTarget(null);
-    if (lockTarget.is_locked) unlockMut.mutate(lockTarget.id, { onSettled: done });
+    if (lockTarget.is_locked)
+      unlockMut.mutate(lockTarget.id, { onSettled: done });
     else lockMut.mutate(lockTarget.id, { onSettled: done });
   };
 
@@ -106,19 +127,33 @@ export function AccountsPage() {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4">
         <div className="mb-3 md:mb-0">
-          <h1 className="text-2xl font-bold tracking-tight text-text">Tài khoản</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-text">
+            Tài khoản
+          </h1>
           <p className="mt-1 text-sm text-text text-opacity-60">
-            {accounts.length} tài khoản trong hệ thống
+            {total} tài khoản trong hệ thống
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setFormOpen((v) => !v)}
-          className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-        >
-          {formOpen ? <FiX className="mr-2" size={16} /> : <FiPlus className="mr-2" size={16} />}
-          {formOpen ? "Đóng" : "Thêm tài khoản"}
-        </button>
+        <div className="flex items-center">
+          <SearchInput
+            value={query}
+            onChange={handleQuery}
+            placeholder="Tìm theo tên đăng nhập..."
+            className="mr-3 w-64"
+          />
+          <button
+            type="button"
+            onClick={() => setFormOpen((v) => !v)}
+            className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+          >
+            {formOpen ? (
+              <FiX className="mr-2" size={16} />
+            ) : (
+              <FiPlus className="mr-2" size={16} />
+            )}
+            {formOpen ? "Đóng" : "Thêm tài khoản"}
+          </button>
+        </div>
       </div>
 
       {formOpen && (
@@ -126,7 +161,9 @@ export function AccountsPage() {
           onSubmit={onSubmit}
           className="mb-4 rounded-2xl border border-border bg-surface px-5 py-4"
         >
-          <h2 className="mb-3 text-base font-semibold text-text">Tài khoản mới</h2>
+          <h2 className="mb-3 text-base font-semibold text-text">
+            Tài khoản mới
+          </h2>
           <div className="-mx-2 flex flex-wrap">
             <div className="mb-3 w-full px-2 md:w-1/2">
               <FormField label="Tên đăng nhập" required>
@@ -199,38 +236,65 @@ export function AccountsPage() {
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="px-4 py-3 font-medium text-text text-opacity-60">Tên đăng nhập</th>
-              <th className="px-4 py-3 font-medium text-text text-opacity-60">Họ tên</th>
-              <th className="px-4 py-3 font-medium text-text text-opacity-60">Vai trò</th>
-              <th className="px-4 py-3 font-medium text-text text-opacity-60">Đơn vị</th>
-              <th className="px-4 py-3 font-medium text-text text-opacity-60">Trạng thái</th>
+              <th className="px-4 py-3 font-medium text-text text-opacity-60">
+                Tên đăng nhập
+              </th>
+              <th className="px-4 py-3 font-medium text-text text-opacity-60">
+                Họ tên
+              </th>
+              <th className="px-4 py-3 font-medium text-text text-opacity-60">
+                Vai trò
+              </th>
+              <th className="px-4 py-3 font-medium text-text text-opacity-60">
+                Đơn vị
+              </th>
+              <th className="px-4 py-3 font-medium text-text text-opacity-60">
+                Trạng thái
+              </th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-text text-opacity-50">
+                <td
+                  colSpan={6}
+                  className="px-4 py-8 text-center text-text text-opacity-50"
+                >
                   Đang tải...
                 </td>
               </tr>
             ) : isError ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-accent">
-                  {error instanceof Error ? error.message : "Không tải được dữ liệu"}
+                  {error instanceof Error
+                    ? error.message
+                    : "Không tải được dữ liệu"}
                 </td>
               </tr>
             ) : accounts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-text text-opacity-50">
-                  Chưa có tài khoản nào
+                <td
+                  colSpan={6}
+                  className="px-4 py-8 text-center text-text text-opacity-50"
+                >
+                  {query
+                    ? "Không tìm thấy tài khoản nào"
+                    : "Chưa có tài khoản nào"}
                 </td>
               </tr>
             ) : (
               accounts.map((a) => (
-                <tr key={a.id} className="border-b border-border last:border-b-0">
-                  <td className="px-4 py-3 font-medium text-text">{a.username}</td>
-                  <td className="px-4 py-3 text-text text-opacity-70">{a.full_name}</td>
+                <tr
+                  key={a.id}
+                  className="border-b border-border last:border-b-0"
+                >
+                  <td className="px-4 py-3 font-medium text-text">
+                    {a.username}
+                  </td>
+                  <td className="px-4 py-3 text-text text-opacity-70">
+                    {a.full_name}
+                  </td>
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-primary bg-opacity-10 px-2.5 py-1 text-xs font-medium text-primary">
                       {a.role}
@@ -270,7 +334,11 @@ export function AccountsPage() {
                         disabled={lockMut.isPending || unlockMut.isPending}
                         className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
                       >
-                        {a.is_locked ? <FiUnlock size={15} /> : <FiLock size={15} />}
+                        {a.is_locked ? (
+                          <FiUnlock size={15} />
+                        ) : (
+                          <FiLock size={15} />
+                        )}
                       </button>
                     </div>
                   </td>
@@ -279,6 +347,20 @@ export function AccountsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={total}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => {
+            setPageSize(s);
+            setPage(1);
+          }}
+        />
       </div>
 
       {resetTarget && (
@@ -291,9 +373,14 @@ export function AccountsPage() {
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 shadow-xl"
           >
-            <h2 className="mb-1 text-base font-semibold text-text">Đặt lại mật khẩu</h2>
+            <h2 className="mb-1 text-base font-semibold text-text">
+              Đặt lại mật khẩu
+            </h2>
             <p className="mb-4 text-sm text-text text-opacity-60">
-              Tài khoản <span className="font-medium text-text">{resetTarget.username}</span>
+              Tài khoản{" "}
+              <span className="font-medium text-text">
+                {resetTarget.username}
+              </span>
             </p>
             <FormField label="Mật khẩu mới" required>
               <Input

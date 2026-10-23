@@ -2,13 +2,17 @@ import { http } from "@/api/axios";
 import { endpoints } from "@/api/endpoints";
 import type { ApiResponse, ListResult } from "@/types/api.types";
 
-import type { Account, CreateAccountRequest, ResetPasswordRequest } from "./accounts.types";
+import type {
+  Account,
+  CreateAccountRequest,
+  ResetPasswordRequest,
+} from "./accounts.types";
 
 export const accountsApi = {
-  list: async (page = 1, size = 100) => {
+  list: async (page = 1, size = 100, q?: string) => {
     const { data } = await http.get<ApiResponse<ListResult<Account>>>(
       endpoints.accounts.list,
-      { params: { page, size } },
+      { params: { page, size, q: q || undefined } },
     );
     return data;
   },

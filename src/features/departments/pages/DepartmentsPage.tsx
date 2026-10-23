@@ -5,6 +5,8 @@ import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
+import { Pagination } from "@/components/ui/Pagination";
+import { SearchInput } from "@/components/ui/SearchInput";
 import {
   departmentsApi,
   type Department,
@@ -32,10 +34,24 @@ export function DepartmentsPage() {
   const [deleteErr, setDeleteErr] = useState("");
   const [err, setErr] = useState("");
 
-  const { data: departments, isLoading, isError, error } = useQuery({
-    queryKey: ["departments"],
-    queryFn: async () => pickData(await departmentsApi.list(1, 100))?.items ?? [],
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["departments", "list", { q: query, page, size: pageSize }],
+    queryFn: async () =>
+      pickData(await departmentsApi.list(page, pageSize, query || undefined)),
   });
+
+  const departments = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const handleQuery = (v: string) => {
+    setQuery(v);
+    setPage(1);
+  };
 
   const saveMut = useMutation({
     mutationFn: async (p: { name: string; code: string }) => {
@@ -43,7 +59,8 @@ export function DepartmentsPage() {
         ? await departmentsApi.update(editing.id, p)
         : await departmentsApi.create(p);
       const d = pickData(res);
-      if (!res.ok || !d) throw new Error(res.error?.message || "Lưu đơn vị thất bại");
+      if (!res.ok || !d)
+        throw new Error(res.error?.message || "Lưu đơn vị thất bại");
       return d;
     },
     onSuccess: () => {
@@ -91,11 +108,22 @@ export function DepartmentsPage() {
 
   return (
     <div>
-      <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
-        <h1 className="text-2xl font-bold tracking-tight text-text">Đơn vị</h1>
-        <p className="mt-1 text-sm text-text text-opacity-60">
-          Quản lý các phòng/ban trong đơn vị — user thường thuộc về một đơn vị.
-        </p>
+      <div className="mb-6 flex flex-wrap items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4">
+        <div className="mb-2 mr-4">
+          <h1 className="text-2xl font-bold tracking-tight text-text">
+            Đơn vị
+          </h1>
+          <p className="mt-1 text-sm text-text text-opacity-60">
+            Quản lý các phòng/ban trong đơn vị — user thường thuộc về một đơn
+            vị.
+          </p>
+        </div>
+        <SearchInput
+          value={query}
+          onChange={handleQuery}
+          placeholder="Tìm theo tên hoặc mã..."
+          className="mb-2 w-64"
+        />
       </div>
 
       <div className="mb-6 rounded-2xl border border-border bg-surface px-5 py-4">
@@ -123,7 +151,11 @@ export function DepartmentsPage() {
             disabled={!name.trim() || saveMut.isPending}
             onClick={handleSave}
           >
-            {editing ? <FiEdit2 className="mr-2" size={15} /> : <FiPlus className="mr-2" size={15} />}
+            {editing ? (
+              <FiEdit2 className="mr-2" size={15} />
+            ) : (
+              <FiPlus className="mr-2" size={15} />
+            )}
             {editing ? "Cập nhật" : "Thêm đơn vị"}
           </Button>
           {editing && (
@@ -157,7 +189,10 @@ export function DepartmentsPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-text text-opacity-60">
+                <td
+                  colSpan={4}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
                   Đang tải...
                 </td>
               </tr>
@@ -167,17 +202,25 @@ export function DepartmentsPage() {
                   {(error as Error).message}
                 </td>
               </tr>
-            ) : !departments || departments.length === 0 ? (
+            ) : departments.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-text text-opacity-60">
-                  Chưa có đơn vị nào.
+                <td
+                  colSpan={4}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
+                  {query ? "Không tìm thấy đơn vị nào." : "Chưa có đơn vị nào."}
                 </td>
               </tr>
             ) : (
               departments.map((d) => (
-                <tr key={d.id} className="border-b border-border last:border-b-0">
+                <tr
+                  key={d.id}
+                  className="border-b border-border last:border-b-0"
+                >
                   <td className="px-4 py-3 font-medium text-text">{d.code}</td>
-                  <td className="px-4 py-3 text-text text-opacity-80">{d.name}</td>
+                  <td className="px-4 py-3 text-text text-opacity-80">
+                    {d.name}
+                  </td>
                   <td className="px-4 py-3 text-text text-opacity-60">
                     {new Date(d.created_at).toLocaleDateString("vi-VN")}
                   </td>
@@ -207,6 +250,20 @@ export function DepartmentsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={total}
+          onPageChange={setPage}
+          onPageSizeChange={(s) => {
+            setPageSize(s);
+            setPage(1);
+          }}
+        />
       </div>
 
       <ConfirmDialog

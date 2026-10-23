@@ -7,20 +7,32 @@ import type {
 } from "@/features/categories/categories.types";
 import type { ApiResponse } from "@/types/api.types";
 
+export interface CategoryListFilter {
+  q?: string;
+  page?: number;
+  size?: number;
+}
+
 const keys = {
   all: ["categories"] as const,
+  list: (filter: CategoryListFilter) => ["categories", "list", filter] as const,
   detail: (id: string) => ["categories", id] as const,
 };
 
 function must<T>(res: ApiResponse<T>, fallback: string): T {
-  if (!res.ok || res.data === undefined) throw new Error(res.error?.message || fallback);
+  if (!res.ok || res.data === undefined)
+    throw new Error(res.error?.message || fallback);
   return res.data;
 }
 
-export function useCategories() {
+export function useCategories(filter: CategoryListFilter = {}) {
   return useQuery({
-    queryKey: keys.all,
-    queryFn: async () => must(await categoriesApi.list(), "Không tải được danh mục").items,
+    queryKey: keys.list(filter),
+    queryFn: async () =>
+      must(
+        await categoriesApi.list(filter.page, filter.size, filter.q),
+        "Không tải được danh mục",
+      ),
   });
 }
 
@@ -28,7 +40,8 @@ export function useCategory(id: string) {
   return useQuery({
     queryKey: keys.detail(id),
     enabled: !!id,
-    queryFn: async () => must(await categoriesApi.detail(id), "Không tải được danh mục"),
+    queryFn: async () =>
+      must(await categoriesApi.detail(id), "Không tải được danh mục"),
   });
 }
 
@@ -46,7 +59,8 @@ export function useDeleteCategory() {
   return useMutation({
     mutationFn: async (id: string) => {
       const res = await categoriesApi.remove(id);
-      if (!res.ok) throw new Error(res.error?.message || "Xóa danh mục thất bại");
+      if (!res.ok)
+        throw new Error(res.error?.message || "Xóa danh mục thất bại");
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.all }),
   });
@@ -69,7 +83,8 @@ export function useRemoveCategoryAttribute(id: string) {
   return useMutation({
     mutationFn: async (attrId: string) => {
       const res = await categoriesApi.removeAttribute(id, attrId);
-      if (!res.ok) throw new Error(res.error?.message || "Gỡ thuộc tính thất bại");
+      if (!res.ok)
+        throw new Error(res.error?.message || "Gỡ thuộc tính thất bại");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: keys.detail(id) });

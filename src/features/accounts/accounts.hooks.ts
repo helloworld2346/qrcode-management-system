@@ -5,23 +5,31 @@ import type { ApiResponse } from "@/types/api.types";
 import { accountsApi } from "./accounts.api";
 import type { CreateAccountRequest } from "./accounts.types";
 
+export interface AccountListFilter {
+  q?: string;
+  page?: number;
+  size?: number;
+}
+
 export const accountKeys = {
   all: ["accounts"] as const,
+  list: (filter: AccountListFilter) => ["accounts", "list", filter] as const,
 };
 
 function must<T>(res: ApiResponse<T>, fallback: string): T {
-  if (!res.ok || res.data === undefined) throw new Error(res.error?.message || fallback);
+  if (!res.ok || res.data === undefined)
+    throw new Error(res.error?.message || fallback);
   return res.data;
 }
 
-export function useAccounts() {
+export function useAccounts(filter: AccountListFilter = {}) {
   return useQuery({
-    queryKey: accountKeys.all,
-    queryFn: async () => {
-      const res = await accountsApi.list();
-      const d = must(res, "Không tải được danh sách tài khoản");
-      return d.items;
-    },
+    queryKey: accountKeys.list(filter),
+    queryFn: async () =>
+      must(
+        await accountsApi.list(filter.page, filter.size, filter.q),
+        "Không tải được danh sách tài khoản",
+      ),
   });
 }
 
@@ -54,9 +62,18 @@ export function useUnlockAccount() {
 
 export function useResetPassword() {
   return useMutation({
-    mutationFn: async ({ id, newPassword }: { id: string; newPassword: string }) => {
-      const res = await accountsApi.resetPassword(id, { new_password: newPassword });
-      if (!res.ok) throw new Error(res.error?.message || "Đặt lại mật khẩu thất bại");
+    mutationFn: async ({
+      id,
+      newPassword,
+    }: {
+      id: string;
+      newPassword: string;
+    }) => {
+      const res = await accountsApi.resetPassword(id, {
+        new_password: newPassword,
+      });
+      if (!res.ok)
+        throw new Error(res.error?.message || "Đặt lại mật khẩu thất bại");
     },
   });
 }
