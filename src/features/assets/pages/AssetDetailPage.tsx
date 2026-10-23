@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { FiArrowLeft, FiEdit2, FiPrinter } from "react-icons/fi";
-import { Link, useParams } from "react-router-dom";
+import { FiArrowLeft, FiEdit2, FiPrinter, FiTrash2 } from "react-icons/fi";
+import { Link, useNavigate, useParams } from "react-router-dom";
+
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { FormSelect } from "@/components/ui/FormSelect";
 
 import {
   useAssetByCode,
   useAssetHistory,
   useAssetQR,
+  useDeleteAsset,
   useUpdateAssetStatus,
 } from "@/features/assets/assets.hooks";
 import {
@@ -26,6 +30,7 @@ const fmtValue = (v: unknown): string => {
 
 export function AssetDetailPage() {
   const { code = "" } = useParams();
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { data: asset, isLoading, error } = useAssetByCode(code);
   const { data: qrUrl } = useAssetQR(asset?.id);
@@ -34,6 +39,9 @@ export function AssetDetailPage() {
   const [newStatus, setNewStatus] = useState<AssetStatus | "">("");
   const [note, setNote] = useState("");
   const [statusErr, setStatusErr] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteErr, setDeleteErr] = useState("");
+  const deleteMut = useDeleteAsset();
 
   if (isLoading) {
     return (
@@ -122,6 +130,17 @@ export function AssetDetailPage() {
             <FiEdit2 className="mr-2" size={16} />
             Sửa
           </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setDeleteErr("");
+              setDeleteOpen(true);
+            }}
+            className="ml-3 flex items-center rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent hover:bg-opacity-10"
+          >
+            <FiTrash2 className="mr-2" size={16} />
+            Xóa
+          </button>
         </div>
       </div>
 
@@ -183,21 +202,16 @@ export function AssetDetailPage() {
               Đổi trạng thái
             </h2>
             <div className="flex flex-wrap items-end gap-3">
-              <select
+              <FormSelect
                 value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value as AssetStatus)}
-                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-              >
-                <option value="">-- Trạng thái mới --</option>
-                {statusMeta
+                onChange={(v) => setNewStatus(v as AssetStatus)}
+                placeholder="-- Trạng thái mới --"
+                className="w-56"
+                options={statusMeta
                   .filter((s) => s.value !== asset.status)
                   .filter((s) => s.value !== "LIQUIDATED" || user?.role === "admin")
-                  .map((s) => (
-                    <option key={s.value} value={s.value}>
-                      {s.label}
-                    </option>
-                  ))}
-              </select>
+                  .map((s) => ({ value: s.value, label: s.label }))}
+              />
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -261,6 +275,23 @@ export function AssetDetailPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        title="Xóa tài sản"
+        message={`Xóa "${asset.name}" (${asset.code})? Chỉ tài sản Trong kho mới xóa được.`}
+        confirmLabel="Xóa"
+        loading={deleteMut.isPending}
+        error={deleteErr}
+        onConfirm={() => {
+          setDeleteErr("");
+          deleteMut.mutate(asset.id, {
+            onSuccess: () => navigate("/dashboard/assets"),
+            onError: (e) => setDeleteErr(errorMessage(e)),
+          });
+        }}
+        onCancel={() => setDeleteOpen(false)}
+      />
     </div>
   );
 }
