@@ -6,7 +6,6 @@ import type {
   CreateCategoryRequest,
 } from "@/features/categories/categories.types";
 import type { ApiResponse } from "@/types/api.types";
-import { pickData } from "@/types/api.types";
 
 export interface CategoryListFilter {
   q?: string;
@@ -38,12 +37,11 @@ export function useCategories(filter: CategoryListFilter = {}) {
   });
 }
 
-// Danh sách đầy đủ cho dropdown
 export function useCategoryOptions() {
   return useQuery({
-    queryKey: keys.options,
+    queryKey: [...keys.all, "options"] as const,
     queryFn: async () =>
-      pickData(await categoriesApi.list(1, 100))?.items ?? [],
+      must(await categoriesApi.list(1, 100), "Không tải được danh mục").items,
   });
 }
 
