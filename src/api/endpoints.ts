@@ -59,4 +59,7 @@ export const endpoints = {
     scans: (id: string) => `/inventory/sessions/${id}/scans`,
     report: (id: string) => `/inventory/sessions/${id}/report`,
   },
+  audit: {
+    list: "/audit",
+  },
 };
