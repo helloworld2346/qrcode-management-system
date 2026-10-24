@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { FiSave } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
+import { DatePicker } from "@/components/ui/DatePicker";
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
@@ -12,11 +13,12 @@ import {
   assetSchema,
   type AssetFormValues,
 } from "@/features/assets/assets.schema";
-import {
-  statusColor,
-  statusMeta,
-} from "@/features/assets/assets.types";
-import type { Category, CategoryAttribute } from "@/features/categories/categories.types";
+import { statusColor, statusMeta } from "@/features/assets/assets.types";
+import { useCategory } from "@/features/categories/categories.hooks";
+import type {
+  Category,
+  CategoryAttribute,
+} from "@/features/categories/categories.types";
 import { useAuthStore } from "@/store/auth.store";
 
 interface Props {
@@ -28,7 +30,6 @@ interface Props {
   departments: { id: string; name: string }[];
 }
 
-// Input động theo data_type của attribute
 function AttributeInput({
   attr,
   value,
@@ -55,7 +56,9 @@ function AttributeInput({
         <Input
           type="number"
           value={v}
-          onChange={(e) => onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+          onChange={(e) =>
+            onChange(e.target.value === "" ? undefined : Number(e.target.value))
+          }
         />
       );
     case "BOOLEAN":
@@ -72,10 +75,16 @@ function AttributeInput({
       );
     case "DATE":
       return (
-        <Input type="date" value={v} onChange={(e) => onChange(e.target.value || undefined)} />
+        <DatePicker value={v} onChange={(iso) => onChange(iso || undefined)} />
       );
     case "TEXTAREA":
-      return <Textarea value={v} onChange={(e) => onChange(e.target.value || undefined)} rows={3} />;
+      return (
+        <Textarea
+          value={v}
+          onChange={(e) => onChange(e.target.value || undefined)}
+          rows={3}
+        />
+      );
     case "MULTI_SELECT":
       return (
         <select
@@ -94,7 +103,12 @@ function AttributeInput({
         </select>
       );
     default:
-      return <Input value={v} onChange={(e) => onChange(e.target.value || undefined)} />;
+      return (
+        <Input
+          value={v}
+          onChange={(e) => onChange(e.target.value || undefined)}
+        />
+      );
   }
 }
 
@@ -125,20 +139,35 @@ export function AssetForm({
   const watchCategoryId = watch("category_id");
   const watchAttributes = watch("attributes") ?? {};
 
+  const { data: categoryDetail, isLoading: loadingAttrs } = useCategory(
+    watchCategoryId ?? "",
+  );
+
+  useEffect(() => {
+    if (!isAdmin && user?.departmentId) {
+      setValue("department_id", user.departmentId);
+    }
+  }, [isAdmin, user, setValue]);
+
   const categoryOptions = useMemo(
-    () => categories.map((c) => ({ value: c.id, label: `${c.name} (${c.code})` })),
+    () =>
+      categories.map((c) => ({ value: c.id, label: `${c.name} (${c.code})` })),
     [categories],
   );
   const deptOptions = useMemo(
     () => departments.map((d) => ({ value: d.id, label: d.name })),
     [departments],
   );
+  const userDeptName = useMemo(
+    () => departments.find((d) => d.id === user?.departmentId)?.name,
+    [departments, user],
+  );
   const schema = useMemo(
     () =>
-      (categories.find((c) => c.id === watchCategoryId)?.attributes ?? [])
+      (categoryDetail?.attributes ?? [])
         .slice()
         .sort((a, b) => a.sort_order - b.sort_order),
-    [categories, watchCategoryId],
+    [categoryDetail],
   );
 
   return (
@@ -168,7 +197,7 @@ export function AssetForm({
                 label="Danh mục"
                 required
                 error={errors.category_id?.message}
-                className={`mb-4 w-full ${isAdmin ? "md:w-1/2 md:pr-2" : ""}`}
+                className="mb-4 w-full md:w-1/2 md:pr-2"
               >
                 <Controller
                   name="category_id"
@@ -176,7 +205,10 @@ export function AssetForm({
                   render={({ field }) => (
                     <FormSelect
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(v) => {
+                        field.onChange(v);
+                        setValue("attributes", {}, { shouldDirty: true });
+                      }}
                       onBlur={field.onBlur}
                       invalid={!!errors.category_id}
                       placeholder="-- Chọn danh mục --"
@@ -186,7 +218,7 @@ export function AssetForm({
                 />
               </FormField>
 
-              {isAdmin && (
+              {isAdmin ? (
                 <FormField
                   label="Đơn vị"
                   className="mb-4 w-full md:w-1/2 md:pl-2"
@@ -207,6 +239,21 @@ export function AssetForm({
                     )}
                   />
                 </FormField>
+              ) : (
+                <FormField
+                  label="Đơn vị"
+                  className="mb-4 w-full md:w-1/2 md:pl-2"
+                >
+                  <div className="flex h-[38px] items-center rounded-lg border border-border bg-bg px-3 text-sm text-text text-opacity-70">
+                    {userDeptName ?? "Đơn vị của bạn"}
+                  </div>
+                </FormField>
+              )}
+
+              {watchCategoryId && loadingAttrs && (
+                <p className="mb-4 w-full text-sm text-text text-opacity-60">
+                  Đang tải thuộc tính...
+                </p>
               )}
 
               {schema.map((attr) => (
