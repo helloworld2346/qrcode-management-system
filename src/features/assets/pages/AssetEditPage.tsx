@@ -1,14 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import type { AssetFormValues } from "@/features/assets/assets.schema";
 import { useAssetByCode, useUpdateAsset } from "@/features/assets/assets.hooks";
+import type { AssetFormValues } from "@/features/assets/assets.schema";
 import { AssetForm } from "@/features/assets/components/AssetForm";
-import { categoriesApi } from "@/features/categories/categories.api";
-import { departmentsApi } from "@/features/departments/departments.api";
-import { pickData, errorMessage } from "@/types/api.types";
+import { useCategoryOptions } from "@/features/categories/categories.hooks";
+import { useDepartmentOptions } from "@/features/departments/departments.hooks";
+import { errorMessage } from "@/types/api.types";
 
 export function AssetEditPage() {
   const { code = "" } = useParams();
@@ -17,14 +16,8 @@ export function AssetEditPage() {
   const updateMut = useUpdateAsset();
   const [submitErr, setSubmitErr] = useState("");
 
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => pickData(await categoriesApi.list(1, 100))?.items ?? [],
-  });
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    queryFn: async () => pickData(await departmentsApi.list(1, 100))?.items ?? [],
-  });
+  const { data: categories } = useCategoryOptions();
+  const { data: departments } = useDepartmentOptions();
 
   if (isLoading) {
     return (
