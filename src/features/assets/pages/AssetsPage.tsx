@@ -2,6 +2,8 @@ import { useState } from "react";
 import { FiEdit2, FiMaximize2, FiPlus, FiPrinter } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
+import { Checkbox } from "@/components/ui/Checkbox";
+import { FormSelect } from "@/components/ui/FormSelect";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { useAssets, useMarkPrinted } from "@/features/assets/assets.hooks";
@@ -14,6 +16,11 @@ import {
 import type { LabelPreset } from "@/features/print/print.api";
 import { usePrintLabels } from "@/features/print/print.hooks";
 import { useAuthStore } from "@/store/auth.store";
+
+const PRESET_OPTIONS = [
+  { value: "A4-3x8", label: "A4 — 3×8 (24 tem/trang)" },
+  { value: "A4-2x5", label: "A4 — 2×5 (10 tem/trang)" },
+];
 
 export function AssetsPage() {
   const user = useAuthStore((s) => s.user);
@@ -54,6 +61,8 @@ export function AssetsPage() {
   const pageIds = items.map((a) => a.id);
   const allOnPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+  const someOnPageSelected =
+    pageIds.some((id) => selected.includes(id)) && !allOnPageSelected;
   const toggleAllOnPage = () =>
     setSelected((prev) =>
       allOnPageSelected
@@ -160,14 +169,12 @@ export function AssetsPage() {
             <span className="mr-3 text-sm text-text text-opacity-60">
               Đã chọn {selected.length}
             </span>
-            <select
+            <FormSelect
               value={preset}
-              onChange={(e) => setPreset(e.target.value as LabelPreset)}
-              className="mr-3 rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none"
-            >
-              <option value="A4-3x8">A4 — 3×8 (24 tem/trang)</option>
-              <option value="A4-2x5">A4 — 2×5 (10 tem/trang)</option>
-            </select>
+              options={PRESET_OPTIONS}
+              onChange={(v) => setPreset(v as LabelPreset)}
+              className="mr-3 w-56"
+            />
             <button
               type="button"
               onClick={handlePrintSelected}
@@ -192,9 +199,9 @@ export function AssetsPage() {
           <thead>
             <tr className="border-b border-border text-xs uppercase text-text text-opacity-50">
               <th className="px-5 py-3 font-semibold">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={allOnPageSelected}
+                  indeterminate={someOnPageSelected}
                   onChange={toggleAllOnPage}
                   aria-label="Chọn tất cả"
                 />
@@ -240,8 +247,7 @@ export function AssetsPage() {
                   className="border-b border-border transition-colors hover:bg-primary hover:bg-opacity-5"
                 >
                   <td className="px-5 py-3">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selected.includes(a.id)}
                       onChange={() => toggleOne(a.id)}
                       aria-label={`Chọn ${a.code}`}
