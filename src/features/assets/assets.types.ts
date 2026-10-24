@@ -1,4 +1,3 @@
-// Kiểu dữ liệu khớp response Go backend /assets
 export type AssetStatus =
   | "IN_STOCK"
   | "IN_USE"
@@ -6,6 +5,14 @@ export type AssetStatus =
   | "BROKEN"
   | "PENDING_LIQUIDATION"
   | "LIQUIDATED";
+
+export interface AssetAttributeDetail {
+  code: string;
+  name: string;
+  data_type: string;
+  value: unknown;
+  sort_order: number;
+}
 
 export interface Asset {
   id: string;
@@ -16,6 +23,7 @@ export interface Asset {
   department_id: string;
   department_name?: string;
   attributes?: Record<string, unknown>;
+  attributes_detail?: AssetAttributeDetail[];
   status: AssetStatus;
   is_printed: boolean;
   created_by: string;
@@ -34,7 +42,7 @@ export interface AssetHistory {
 export interface CreateAssetRequest {
   name: string;
   category_id: string;
-  department_id?: string; // user thường tự = phòng mình
+  department_id?: string;
   attributes?: Record<string, unknown>;
 }
 

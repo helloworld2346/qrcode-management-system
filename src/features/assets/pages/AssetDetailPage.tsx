@@ -71,15 +71,25 @@ export function AssetDetailPage() {
     { label: "Mã tài sản", value: asset.code },
     { label: "Tên tài sản", value: asset.name },
     { label: "Danh mục", value: asset.category_name ?? asset.category_id },
-    { label: "Đơn vị (ID)", value: asset.department_id },
-    { label: "Ngày tạo", value: new Date(asset.created_at).toLocaleString("vi-VN") },
+    { label: "Đơn vị", value: asset.department_name ?? asset.department_id },
+    {
+      label: "Ngày tạo",
+      value: new Date(asset.created_at).toLocaleString("vi-VN"),
+    },
     { label: "Đã in tem", value: asset.is_printed ? "Có" : "Chưa" },
   ];
 
-  const attrRows = Object.entries(asset.attributes ?? {}).map(([k, v]) => ({
-    label: k,
-    value: fmtValue(v),
-  }));
+  const detail = asset.attributes_detail ?? [];
+  const shownCodes = new Set(detail.map((d) => d.code));
+  const attrRows = [
+    ...detail
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((d) => ({ label: d.name, value: fmtValue(d.value) })),
+    ...Object.entries(asset.attributes ?? {})
+      .filter(([k]) => !shownCodes.has(k))
+      .map(([k, v]) => ({ label: k, value: fmtValue(v) })),
+  ];
 
   const submitStatus = () => {
     if (!newStatus) return;

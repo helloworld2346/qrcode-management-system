@@ -22,6 +22,13 @@ function parseCode(raw: string): string {
   return s;
 }
 
+const fmtValue = (v: unknown): string => {
+  if (v === null || v === undefined || v === "") return "-";
+  if (Array.isArray(v)) return v.join(", ");
+  if (typeof v === "boolean") return v ? "Có" : "Không";
+  return String(v);
+};
+
 export function ScannerPage() {
   const [input, setInput] = useState("");
   const [code, setCode] = useState("");
@@ -101,7 +108,6 @@ export function ScannerPage() {
 
   return (
     <div>
-      {/* Hero header */}
       <div className="relative mb-6 overflow-hidden rounded-2xl border border-border bg-surface px-6 py-6">
         <div
           className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-primary opacity-10 blur-2xl"
@@ -123,9 +129,7 @@ export function ScannerPage() {
         </div>
       </div>
 
-      {/* Two-column layout */}
       <div className="-mx-2 flex flex-wrap">
-        {/* Left: input + scan actions */}
         <div className="mb-4 w-full px-2 lg:w-1/2">
           <div className="h-full rounded-2xl border border-border bg-surface px-5 py-5">
             <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-text text-opacity-50">
@@ -150,7 +154,6 @@ export function ScannerPage() {
               </button>
             </div>
 
-            {/* Scan actions */}
             <div className="mt-4 border-t border-border pt-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text text-opacity-40">
                 Hoặc quét mã
@@ -201,10 +204,8 @@ export function ScannerPage() {
               {fileErr && <p className="mt-2 text-xs text-accent">{fileErr}</p>}
             </div>
 
-            {/* vùng ẩn dùng cho scanFile của html5-qrcode khi camera tắt */}
             {!cameraOn && <div id={divId} className="hidden" />}
 
-            {/* Camera viewport với khung ngắm */}
             {cameraOn && (
               <div className="mt-4 rounded-xl border border-border bg-bg p-3">
                 <div className="relative mx-auto w-full max-w-sm">
@@ -212,7 +213,6 @@ export function ScannerPage() {
                     id={divId}
                     className="w-full overflow-hidden rounded-xl"
                   />
-                  {/* khung ngắm 4 góc */}
                   <div className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2">
                     <span className="absolute left-0 top-0 h-6 w-6 rounded-tl-lg border-l-2 border-t-2 border-primary" />
                     <span className="absolute right-0 top-0 h-6 w-6 rounded-tr-lg border-r-2 border-t-2 border-primary" />
@@ -228,9 +228,7 @@ export function ScannerPage() {
           </div>
         </div>
 
-        {/* Right: result / empty / error */}
         <div className="mb-4 w-full px-2 lg:w-1/2">
-          {/* Error */}
           {code && !isFetching && !asset && error && (
             <div className="flex items-start rounded-2xl border border-accent border-opacity-40 bg-accent bg-opacity-5 px-5 py-4">
               <FiX className="mr-2 mt-0.5 shrink-0 text-accent" size={16} />
@@ -238,7 +236,6 @@ export function ScannerPage() {
             </div>
           )}
 
-          {/* Loading skeleton */}
           {code && isFetching && (
             <div className="rounded-2xl border border-border bg-surface p-5">
               <div className="mb-4 h-5 w-40 animate-pulse rounded bg-text bg-opacity-10" />
@@ -248,7 +245,6 @@ export function ScannerPage() {
             </div>
           )}
 
-          {/* Empty placeholder */}
           {!code && !asset && (
             <div className="flex h-full min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface px-5 py-10 text-center">
               <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-primary bg-opacity-10 text-primary">
@@ -261,7 +257,6 @@ export function ScannerPage() {
             </div>
           )}
 
-          {/* Result */}
           {asset && (
             <div className="rounded-2xl border border-border bg-surface p-5">
               <div className="mb-4 flex items-center justify-between border-b border-border pb-4">
@@ -294,31 +289,59 @@ export function ScannerPage() {
                 </div>
                 <div className="flex border-b border-border border-opacity-50 py-2">
                   <dt className="w-32 shrink-0 text-text text-opacity-50">
+                    Đơn vị
+                  </dt>
+                  <dd className="font-medium text-text">
+                    {asset.department_name ?? asset.department_id ?? "-"}
+                  </dd>
+                </div>
+                <div className="flex border-b border-border border-opacity-50 py-2">
+                  <dt className="w-32 shrink-0 text-text text-opacity-50">
                     Ngày tạo
                   </dt>
                   <dd className="font-medium text-text">
                     {new Date(asset.created_at).toLocaleString("vi-VN")}
                   </dd>
                 </div>
-                {Object.entries(asset.attributes ?? {}).map(([k, v]) => (
-                  <div
-                    key={k}
-                    className="flex border-b border-border border-opacity-50 py-2 last:border-b-0"
-                  >
-                    <dt className="w-32 shrink-0 text-text text-opacity-50">
-                      {k}
-                    </dt>
-                    <dd className="font-medium text-text">
-                      {Array.isArray(v)
-                        ? v.join(", ")
-                        : typeof v === "boolean"
-                          ? v
-                            ? "Có"
-                            : "Không"
-                          : String(v ?? "-")}
-                    </dd>
-                  </div>
-                ))}
+                {(() => {
+                  const detail = (asset.attributes_detail ?? [])
+                    .slice()
+                    .sort((a, b) => a.sort_order - b.sort_order);
+                  const shownCodes = new Set(detail.map((d) => d.code));
+                  const extras = Object.entries(asset.attributes ?? {}).filter(
+                    ([k]) => !shownCodes.has(k),
+                  );
+                  return (
+                    <>
+                      {detail.map((attr) => (
+                        <div
+                          key={attr.code}
+                          className="flex border-b border-border border-opacity-50 py-2 last:border-b-0"
+                        >
+                          <dt className="w-32 shrink-0 text-text text-opacity-50">
+                            {attr.name}
+                          </dt>
+                          <dd className="font-medium text-text">
+                            {fmtValue(attr.value)}
+                          </dd>
+                        </div>
+                      ))}
+                      {extras.map(([k, v]) => (
+                        <div
+                          key={k}
+                          className="flex border-b border-border border-opacity-50 py-2 last:border-b-0"
+                        >
+                          <dt className="w-32 shrink-0 text-text text-opacity-50">
+                            {k}
+                          </dt>
+                          <dd className="font-medium text-text">
+                            {fmtValue(v)}
+                          </dd>
+                        </div>
+                      ))}
+                    </>
+                  );
+                })()}
               </dl>
               <Link
                 to={`/dashboard/assets/${asset.code}`}
