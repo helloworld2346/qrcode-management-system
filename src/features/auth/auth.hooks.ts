@@ -6,7 +6,6 @@ import { useAuthStore, type Role } from "@/store/auth.store";
 import { pickData } from "@/types/api.types";
 import { logger } from "@/utils/logger";
 
-// Claims do Go backend phát hành: sub/role/department_id/type/jti/exp/iat
 interface JwtPayload {
   sub: string;
   role: string;
@@ -36,7 +35,9 @@ function decodeToken(token: string): JwtPayload | null {
 }
 
 function claimToRole(role?: string): Role {
-  return role === "admin" ? "admin" : "user";
+  if (role === "admin") return "admin";
+  if (role === "editor") return "editor";
+  return "viewer";
 }
 
 const useMock = import.meta.env.VITE_USE_MOCK === "true";

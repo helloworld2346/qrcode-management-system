@@ -24,6 +24,7 @@ const PRESET_OPTIONS = [
 
 export function AssetsPage() {
   const user = useAuthStore((s) => s.user);
+  const canWrite = user?.role === "admin" || user?.role === "editor";
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatus | "all">("all");
   const [page, setPage] = useState(1);
@@ -110,13 +111,15 @@ export function AssetsPage() {
               placeholder="Tìm theo tên..."
               className="mr-3 w-64"
             />
-            <Link
-              to="/dashboard/assets/create"
-              className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-            >
-              <FiPlus className="mr-2" size={16} />
-              Thêm tài sản
-            </Link>
+            {canWrite && (
+              <Link
+                to="/dashboard/assets/create"
+                className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+              >
+                <FiPlus className="mr-2" size={16} />
+                Thêm tài sản
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -295,13 +298,15 @@ export function AssetsPage() {
                       >
                         <FiPrinter size={15} />
                       </Link>
-                      <Link
-                        to={`/dashboard/assets/${a.code}/edit`}
-                        aria-label="Sửa"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
-                      >
-                        <FiEdit2 size={15} />
-                      </Link>
+                      {canWrite && (
+                        <Link
+                          to={`/dashboard/assets/${a.code}/edit`}
+                          aria-label="Sửa"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
+                        >
+                          <FiEdit2 size={15} />
+                        </Link>
+                      )}
                     </div>
                   </td>
                 </tr>

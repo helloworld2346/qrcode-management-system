@@ -48,4 +48,10 @@ export const accountsApi = {
     );
     return data;
   },
+  remove: async (id: string) => {
+    const { data } = await http.delete<ApiResponse<{ message: string }>>(
+      endpoints.accounts.remove(id),
+    );
+    return data;
+  },
 };

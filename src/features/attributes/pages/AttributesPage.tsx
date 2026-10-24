@@ -276,7 +276,7 @@ export function AttributesPage() {
               <th className="px-4 py-3 font-medium">Mã</th>
               <th className="px-4 py-3 font-medium">Tên thuộc tính</th>
               <th className="px-4 py-3 font-medium">Kiểu</th>
-              <th className="px-4 py-3 font-medium">Options</th>
+              <th className="px-4 py-3 font-medium">Lựa chọn</th>
               <th className="px-4 py-3 font-medium">Regex</th>
               <th className="px-4 py-3 font-medium">Thao tác</th>
             </tr>

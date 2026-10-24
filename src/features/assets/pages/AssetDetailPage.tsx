@@ -31,6 +31,7 @@ export function AssetDetailPage() {
   const { code = "" } = useParams();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const canWrite = user?.role === "admin" || user?.role === "editor";
   const { data: asset, isLoading, error } = useAssetByCode(code);
   const { data: qrUrl } = useAssetQR(asset?.id);
   const { data: history } = useAssetHistory(asset?.id);
@@ -132,24 +133,28 @@ export function AssetDetailPage() {
             <FiPrinter className="mr-2" size={16} />
             In QR
           </Link>
-          <Link
-            to={`/dashboard/assets/${asset.code}/edit`}
-            className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-          >
-            <FiEdit2 className="mr-2" size={16} />
-            Sửa
-          </Link>
-          <button
-            type="button"
-            onClick={() => {
-              setDeleteErr("");
-              setDeleteOpen(true);
-            }}
-            className="ml-3 flex items-center rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent hover:bg-opacity-10"
-          >
-            <FiTrash2 className="mr-2" size={16} />
-            Xóa
-          </button>
+          {canWrite && (
+            <>
+              <Link
+                to={`/dashboard/assets/${asset.code}/edit`}
+                className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+              >
+                <FiEdit2 className="mr-2" size={16} />
+                Sửa
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteErr("");
+                  setDeleteOpen(true);
+                }}
+                className="ml-3 flex items-center rounded-lg border border-accent px-4 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent hover:bg-opacity-10"
+              >
+                <FiTrash2 className="mr-2" size={16} />
+                Xóa
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -210,42 +215,44 @@ export function AssetDetailPage() {
             </div>
           )}
 
-          <div className="mb-4 rounded-2xl border border-border bg-surface p-5">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">
-              Đổi trạng thái
-            </h2>
-            <div className="flex flex-wrap items-end">
-              <FormSelect
-                value={newStatus}
-                onChange={(v) => setNewStatus(v as AssetStatus)}
-                placeholder="-- Trạng thái mới --"
-                className="mb-3 mr-3 w-56"
-                options={statusMeta
-                  .filter((s) => s.value !== asset.status)
-                  .filter(
-                    (s) => s.value !== "LIQUIDATED" || user?.role === "admin",
-                  )
-                  .map((s) => ({ value: s.value, label: s.label }))}
-              />
-              <input
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Ghi chú"
-                className="mb-3 mr-3 w-56 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
-              />
-              <button
-                type="button"
-                onClick={submitStatus}
-                disabled={!newStatus || statusMut.isPending}
-                className="mb-3 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {statusMut.isPending ? "Đang đổi..." : "Đổi"}
-              </button>
+          {canWrite && (
+            <div className="mb-4 rounded-2xl border border-border bg-surface p-5">
+              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">
+                Đổi trạng thái
+              </h2>
+              <div className="flex flex-wrap items-end">
+                <FormSelect
+                  value={newStatus}
+                  onChange={(v) => setNewStatus(v as AssetStatus)}
+                  placeholder="-- Trạng thái mới --"
+                  className="mb-3 mr-3 w-56"
+                  options={statusMeta
+                    .filter((s) => s.value !== asset.status)
+                    .filter(
+                      (s) => s.value !== "LIQUIDATED" || user?.role === "admin",
+                    )
+                    .map((s) => ({ value: s.value, label: s.label }))}
+                />
+                <input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Ghi chú"
+                  className="mb-3 mr-3 w-56 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
+                />
+                <button
+                  type="button"
+                  onClick={submitStatus}
+                  disabled={!newStatus || statusMut.isPending}
+                  className="mb-3 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {statusMut.isPending ? "Đang đổi..." : "Đổi"}
+                </button>
+              </div>
+              {statusErr && (
+                <p className="mt-2 text-sm text-red-500">{statusErr}</p>
+              )}
             </div>
-            {statusErr && (
-              <p className="mt-2 text-sm text-red-500">{statusErr}</p>
-            )}
-          </div>
+          )}
 
           <div className="rounded-2xl border border-border bg-surface p-5">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">

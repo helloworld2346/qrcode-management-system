@@ -77,3 +77,12 @@ export function useResetPassword() {
     },
   });
 }
+
+export function useDeleteAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) =>
+      must(await accountsApi.remove(id), "Xóa tài khoản thất bại"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: accountKeys.all }),
+  });
+}

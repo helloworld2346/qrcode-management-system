@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { FiKey, FiLock, FiPlus, FiUnlock, FiX } from "react-icons/fi";
+import { FiKey, FiLock, FiPlus, FiTrash2, FiUnlock, FiX } from "react-icons/fi";
 
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
@@ -9,13 +10,26 @@ import { SearchInput } from "@/components/ui/SearchInput";
 import {
   useAccounts,
   useCreateAccount,
+  useDeleteAccount,
   useLockAccount,
   useResetPassword,
   useUnlockAccount,
 } from "@/features/accounts/accounts.hooks";
-import type { Account } from "@/features/accounts/accounts.types";
+import type { Account, AccountRole } from "@/features/accounts/accounts.types";
 import { useDepartmentOptions } from "@/features/departments/departments.hooks";
 import { errorMessage } from "@/types/api.types";
+
+const ROLE_OPTIONS = [
+  { value: "viewer", label: "Viewer (chỉ đọc)" },
+  { value: "editor", label: "Editor (theo đơn vị)" },
+  { value: "admin", label: "Admin (toàn quyền)" },
+];
+
+const roleLabel: Record<AccountRole, string> = {
+  admin: "Admin",
+  editor: "Editor",
+  viewer: "Viewer",
+};
 
 export function AccountsPage() {
   const [query, setQuery] = useState("");
@@ -40,6 +54,7 @@ export function AccountsPage() {
   const lockMut = useLockAccount();
   const unlockMut = useUnlockAccount();
   const resetMut = useResetPassword();
+  const deleteMut = useDeleteAccount();
 
   const { data: departments } = useDepartmentOptions();
 
@@ -48,10 +63,12 @@ export function AccountsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [resetErr, setResetErr] = useState("");
   const [lockTarget, setLockTarget] = useState<Account | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Account | null>(null);
+  const [deleteErr, setDeleteErr] = useState("");
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"admin" | "user">("user");
+  const [role, setRole] = useState<AccountRole>("editor");
   const [departmentId, setDepartmentId] = useState("");
   const [err, setErr] = useState("");
 
@@ -59,15 +76,15 @@ export function AccountsPage() {
     setUsername("");
     setFullName("");
     setPassword("");
-    setRole("user");
+    setRole("editor");
     setDepartmentId("");
   };
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
     setErr("");
-    if (role === "user" && !departmentId) {
-      setErr("Vui lòng chọn đơn vị cho tài khoản user.");
+    if (role !== "admin" && !departmentId) {
+      setErr("Vui lòng chọn đơn vị cho tài khoản editor/viewer.");
       return;
     }
     createAccount.mutate(
@@ -76,7 +93,7 @@ export function AccountsPage() {
         full_name: fullName.trim(),
         password,
         role,
-        department_id: departmentId || undefined,
+        department_id: role === "admin" ? undefined : departmentId || undefined,
       },
       {
         onSuccess: () => {
@@ -133,7 +150,7 @@ export function AccountsPage() {
           <SearchInput
             value={query}
             onChange={handleQuery}
-            placeholder="Tìm theo tên đăng nhập..."
+            placeholder="Tìm theo tên đăng nhập hoặc họ tên..."
             className="mr-3 w-64"
           />
           <button
@@ -194,16 +211,13 @@ export function AccountsPage() {
               <FormField label="Vai trò" required>
                 <FormSelect
                   value={role}
-                  onChange={(v) => setRole(v as "admin" | "user")}
-                  options={[
-                    { value: "user", label: "User (theo đơn vị)" },
-                    { value: "admin", label: "Admin" },
-                  ]}
+                  onChange={(v) => setRole(v as AccountRole)}
+                  options={ROLE_OPTIONS}
                 />
               </FormField>
             </div>
             <div className="mb-3 w-full px-2 md:w-1/4">
-              <FormField label="Đơn vị" required={role === "user"}>
+              <FormField label="Đơn vị" required={role !== "admin"}>
                 <FormSelect
                   value={departmentId}
                   onChange={setDepartmentId}
@@ -292,7 +306,7 @@ export function AccountsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-primary bg-opacity-10 px-2.5 py-1 text-xs font-medium text-primary">
-                      {a.role}
+                      {roleLabel[a.role] ?? a.role}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-text text-opacity-70">
@@ -334,6 +348,19 @@ export function AccountsPage() {
                         ) : (
                           <FiLock size={15} />
                         )}
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Xóa tài khoản"
+                        title="Xóa tài khoản"
+                        onClick={() => {
+                          setDeleteErr("");
+                          setDeleteTarget(a);
+                        }}
+                        disabled={deleteMut.isPending}
+                        className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-accent hover:bg-opacity-10 hover:text-accent disabled:opacity-50"
+                      >
+                        <FiTrash2 size={15} />
                       </button>
                     </div>
                   </td>
@@ -448,6 +475,28 @@ export function AccountsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Xóa tài khoản"
+        message={
+          deleteTarget
+            ? `Xóa tài khoản "${deleteTarget.username}"? Tài khoản sẽ bị vô hiệu hóa.`
+            : ""
+        }
+        confirmLabel="Xóa"
+        loading={deleteMut.isPending}
+        error={deleteErr}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          setDeleteErr("");
+          deleteMut.mutate(deleteTarget.id, {
+            onSuccess: () => setDeleteTarget(null),
+            onError: (e) => setDeleteErr(errorMessage(e)),
+          });
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
