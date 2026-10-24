@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { FiKey, FiLock, FiPlus, FiUnlock, FiX } from "react-icons/fi";
 
@@ -15,8 +14,8 @@ import {
   useUnlockAccount,
 } from "@/features/accounts/accounts.hooks";
 import type { Account } from "@/features/accounts/accounts.types";
-import { departmentsApi } from "@/features/departments/departments.api";
-import { pickData, errorMessage } from "@/types/api.types";
+import { useDepartmentOptions } from "@/features/departments/departments.hooks";
+import { errorMessage } from "@/types/api.types";
 
 export function AccountsPage() {
   const [query, setQuery] = useState("");
@@ -42,11 +41,7 @@ export function AccountsPage() {
   const unlockMut = useUnlockAccount();
   const resetMut = useResetPassword();
 
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    queryFn: async () =>
-      pickData(await departmentsApi.list(1, 100))?.items ?? [],
-  });
+  const { data: departments } = useDepartmentOptions();
 
   const [formOpen, setFormOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState<Account | null>(null);

@@ -1,4 +1,3 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { FiEdit2, FiPlus, FiTrash2 } from "react-icons/fi";
 
@@ -7,16 +6,18 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { type Department } from "@/features/departments/departments.api";
 import {
-  departmentsApi,
-  type Department,
-} from "@/features/departments/departments.api";
-import { pickData, errorMessage } from "@/types/api.types";
+  useDepartments,
+  useDeleteDepartment,
+  useSaveDepartment,
+} from "@/features/departments/departments.hooks";
+import { errorMessage } from "@/types/api.types";
 
 const slugify = (name: string) =>
   name
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/đ/g, "d")
     .replace(/Đ/g, "D")
     .toUpperCase()
@@ -25,7 +26,6 @@ const slugify = (name: string) =>
     .slice(0, 20);
 
 export function DepartmentsPage() {
-  const qc = useQueryClient();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [codeTouched, setCodeTouched] = useState(false);
@@ -38,10 +38,10 @@ export function DepartmentsPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["departments", "list", { q: query, page, size: pageSize }],
-    queryFn: async () =>
-      pickData(await departmentsApi.list(page, pageSize, query || undefined)),
+  const { data, isLoading, isError, error } = useDepartments({
+    q: query || undefined,
+    page,
+    size: pageSize,
   });
 
   const departments = data?.items ?? [];
@@ -53,41 +53,26 @@ export function DepartmentsPage() {
     setPage(1);
   };
 
-  const saveMut = useMutation({
-    mutationFn: async (p: { name: string; code: string }) => {
-      const res = editing
-        ? await departmentsApi.update(editing.id, p)
-        : await departmentsApi.create(p);
-      const d = pickData(res);
-      if (!res.ok || !d)
-        throw new Error(res.error?.message || "Lưu đơn vị thất bại");
-      return d;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["departments"] });
-      setName("");
-      setCode("");
-      setCodeTouched(false);
-      setEditing(null);
-      setErr("");
-    },
-    onError: (e) => setErr(errorMessage(e)),
-  });
-
-  const delMut = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await departmentsApi.remove(id);
-      if (!res.ok) throw new Error(res.error?.message || "Xóa đơn vị thất bại");
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["departments"] }),
-  });
+  const saveMut = useSaveDepartment(editing?.id);
+  const delMut = useDeleteDepartment();
 
   const handleSave = () => {
     setErr("");
     const n = name.trim();
     const c = (codeTouched || editing ? code : slugify(n)).trim().toUpperCase();
     if (!n || !c) return;
-    saveMut.mutate({ name: n, code: c });
+    saveMut.mutate(
+      { name: n, code: c },
+      {
+        onSuccess: () => {
+          setName("");
+          setCode("");
+          setCodeTouched(false);
+          setEditing(null);
+        },
+        onError: (e) => setErr(errorMessage(e)),
+      },
+    );
   };
 
   const startEdit = (d: Department) => {

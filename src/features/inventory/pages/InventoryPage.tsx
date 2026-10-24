@@ -1,4 +1,3 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { FiCheckCircle, FiPlus, FiSearch } from "react-icons/fi";
 import { Link } from "react-router-dom";
@@ -8,22 +7,20 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
-import { categoriesApi } from "@/features/categories/categories.api";
-import { departmentsApi } from "@/features/departments/departments.api";
+import { useCategoryOptions } from "@/features/categories/categories.hooks";
+import { useDepartmentOptions } from "@/features/departments/departments.hooks";
+import { type InventorySession } from "@/features/inventory/inventory.api";
 import {
-  inventoryApi,
-  type InventorySession,
-} from "@/features/inventory/inventory.api";
+  useCloseInventorySession,
+  useCreateInventorySession,
+  useInventoryReport,
+  useInventorySessions,
+  useScanInventory,
+} from "@/features/inventory/inventory.hooks";
 import { useAuthStore } from "@/store/auth.store";
-import { pickData, errorMessage } from "@/types/api.types";
-
-const keys = {
-  sessions: ["inventory-sessions"] as const,
-  report: (id: string) => ["inventory-report", id] as const,
-};
+import { errorMessage } from "@/types/api.types";
 
 export function InventoryPage() {
-  const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === "admin";
 
@@ -39,82 +36,53 @@ export function InventoryPage() {
   const [closeTarget, setCloseTarget] = useState<InventorySession | null>(null);
   const [closeErr, setCloseErr] = useState("");
 
-  const { data: sessions, isLoading } = useQuery({
-    queryKey: keys.sessions,
-    queryFn: async () => pickData(await inventoryApi.sessions())?.items ?? [],
-  });
-  const { data: departments } = useQuery({
-    queryKey: ["departments"],
-    enabled: scopeType === "DEPARTMENT" && isAdmin,
-    queryFn: async () =>
-      pickData(await departmentsApi.list(1, 100))?.items ?? [],
-  });
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    enabled: scopeType === "CATEGORY",
-    queryFn: async () =>
-      pickData(await categoriesApi.list(1, 100))?.items ?? [],
-  });
-  const { data: report, refetch: refetchReport } = useQuery({
-    queryKey: keys.report(active?.id ?? ""),
-    enabled: !!active,
-    queryFn: async () => pickData(await inventoryApi.report(active!.id)),
-  });
+  const { data: sessions, isLoading } = useInventorySessions();
+  const { data: departments } = useDepartmentOptions();
+  const { data: categories } = useCategoryOptions();
+  const { data: report, refetch: refetchReport } = useInventoryReport(
+    active?.id ?? "",
+  );
 
-  const createMut = useMutation({
-    mutationFn: async () => {
-      const res = await inventoryApi.create({
+  const createMut = useCreateInventorySession();
+  const closeMut = useCloseInventorySession();
+  const scanMut = useScanInventory(active?.id ?? "");
+
+  const handleCreate = () => {
+    setCreateErr("");
+    createMut.mutate(
+      {
         name: name.trim(),
         scope_type: scopeType,
         scope_id:
           scopeType === "DEPARTMENT" && !isAdmin
             ? user?.departmentId ?? ""
             : scopeId,
-      });
-      const d = pickData(res);
-      if (!res.ok || !d)
-        throw new Error(res.error?.message || "Tạo phiên thất bại");
-      return d;
-    },
-    onSuccess: (s) => {
-      qc.invalidateQueries({ queryKey: keys.sessions });
-      setActive(s);
-      setName("");
-      setScopeId("");
-      setCreateErr("");
-    },
-    onError: (e) => setCreateErr(errorMessage(e)),
-  });
+      },
+      {
+        onSuccess: (s) => {
+          setActive(s);
+          setName("");
+          setScopeId("");
+        },
+        onError: (e) => setCreateErr(errorMessage(e)),
+      },
+    );
+  };
 
-  const closeMut = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await inventoryApi.close(id);
-      if (!res.ok) throw new Error(res.error?.message || "Đóng phiên thất bại");
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: keys.sessions });
-      refetchReport();
-    },
-  });
-
-  const scanMut = useMutation({
-    mutationFn: async (code: string) => {
-      const res = await inventoryApi.scan(active!.id, code);
-      const d = pickData(res);
-      if (!res.ok || !d) throw new Error(res.error?.message || "Quét thất bại");
-      return d;
-    },
-    onSuccess: (s) => {
-      setScanCode("");
-      setScanMsg(
-        s.is_unexpected
-          ? `Đã ghi "${s.asset_name}" — NGOÀI phạm vi phiên`
-          : `Đã ghi "${s.asset_name}"`,
-      );
-      refetchReport();
-    },
-    onError: (e) => setScanMsg(errorMessage(e)),
-  });
+  const handleScan = (code: string) => {
+    scanMut.mutate(code, {
+      onSuccess: (s) => {
+        setScanCode("");
+        setScanMsg(
+          s.is_unexpected
+            ? `Đã ghi "${s.asset_name}" — NGOÀI phạm vi phiên`
+            : `Đã ghi "${s.asset_name}"`,
+        );
+        refetchReport();
+      },
+      onError: (e) => setScanMsg(errorMessage(e)),
+    });
+  };
 
   const scopeOptions =
     scopeType === "DEPARTMENT"
@@ -140,50 +108,55 @@ export function InventoryPage() {
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-text text-opacity-60">
           Phiên mới
         </h2>
-        <div className="flex flex-wrap items-end">
-          <FormField label="Tên phiên" required className="mb-3 mr-3 w-64">
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Kiểm kê Q4"
-            />
-          </FormField>
-          <FormField label="Phạm vi" required className="mb-3 mr-3 w-44">
-            <FormSelect
-              value={scopeType}
-              onChange={(v) => {
-                setScopeType(v as "DEPARTMENT" | "CATEGORY");
-                setScopeId("");
-              }}
-              options={[
-                { value: "DEPARTMENT", label: "Theo đơn vị" },
-                { value: "CATEGORY", label: "Theo danh mục" },
-              ]}
-            />
-          </FormField>
-          {(isAdmin || scopeType === "CATEGORY") && (
-            <FormField
-              label={scopeType === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}
-              required
-              className="mb-3 mr-3 w-56"
-            >
-              <FormSelect
-                value={scopeId}
-                onChange={setScopeId}
-                placeholder="-- Chọn --"
-                options={scopeOptions}
+        <div className="-mx-1 flex flex-wrap items-end">
+          <div className="mb-3 mr-3 w-64">
+            <FormField label="Tên phiên" required>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Kiểm kê Q4"
               />
             </FormField>
+          </div>
+          <div className="mb-3 mr-3 w-44">
+            <FormField label="Phạm vi" required>
+              <FormSelect
+                value={scopeType}
+                onChange={(v) => {
+                  setScopeType(v as "DEPARTMENT" | "CATEGORY");
+                  setScopeId("");
+                }}
+                options={[
+                  { value: "DEPARTMENT", label: "Theo đơn vị" },
+                  { value: "CATEGORY", label: "Theo danh mục" },
+                ]}
+              />
+            </FormField>
+          </div>
+          {(isAdmin || scopeType === "CATEGORY") && (
+            <div className="mb-3 mr-3 w-56">
+              <FormField
+                label={scopeType === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}
+                required
+              >
+                <FormSelect
+                  value={scopeId}
+                  onChange={setScopeId}
+                  placeholder="-- Chọn --"
+                  options={scopeOptions}
+                />
+              </FormField>
+            </div>
           )}
           <Button
-            className="mb-3"
             type="button"
+            className="mb-3"
             disabled={
               !name.trim() ||
               ((isAdmin || scopeType === "CATEGORY") && !scopeId) ||
               createMut.isPending
             }
-            onClick={() => createMut.mutate()}
+            onClick={handleCreate}
           >
             <FiPlus className="mr-2" size={15} />
             {createMut.isPending ? "Đang tạo..." : "Tạo phiên"}
@@ -290,7 +263,7 @@ export function InventoryPage() {
                 onChange={(e) => setScanCode(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && scanCode.trim())
-                    scanMut.mutate(scanCode.trim());
+                    handleScan(scanCode.trim());
                 }}
                 placeholder="Nhập/quét mã tài sản..."
                 className="mr-3 w-72"
@@ -298,7 +271,7 @@ export function InventoryPage() {
               <Button
                 type="button"
                 disabled={!scanCode.trim() || scanMut.isPending}
-                onClick={() => scanMut.mutate(scanCode.trim())}
+                onClick={() => handleScan(scanCode.trim())}
               >
                 <FiSearch className="mr-2" size={15} />
                 Ghi quét
@@ -397,7 +370,10 @@ export function InventoryPage() {
           if (!closeTarget) return;
           setCloseErr("");
           closeMut.mutate(closeTarget.id, {
-            onSuccess: () => setCloseTarget(null),
+            onSuccess: () => {
+              setCloseTarget(null);
+              refetchReport();
+            },
             onError: (e) => setCloseErr(errorMessage(e)),
           });
         }}
