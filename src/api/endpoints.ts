@@ -47,6 +47,7 @@ export const endpoints = {
     remove: (id: string) => `/assets/${id}`,
     qr: (id: string) => `/assets/${id}/qr.png`,
     lookup: (code: string) => `/assets/lookup/${code}`,
+    markPrinted: "/assets/mark-printed",
   },
   stats: {
     dashboard: "/stats/dashboard",
@@ -61,5 +62,8 @@ export const endpoints = {
   },
   audit: {
     list: "/audit",
+  },
+  print: {
+    labels: "/print/labels",
   },
 };

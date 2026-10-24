@@ -150,7 +150,7 @@ export function InventoryPage() {
           )}
           <Button
             type="button"
-            className="mb-3"
+            className="mb-3 flex items-center whitespace-nowrap"
             disabled={
               !name.trim() ||
               ((isAdmin || scopeType === "CATEGORY") && !scopeId) ||
