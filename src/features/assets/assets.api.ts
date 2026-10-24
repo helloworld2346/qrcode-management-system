@@ -72,18 +72,18 @@ export const assetsApi = {
     return data;
   },
 
-  qrBlob: async (id: string) => {
-    const { data } = await http.get<Blob>(endpoints.assets.qr(id), {
-      responseType: "blob",
-    });
+  qrBlob: async (id: string) => {  
+    const { data } = await http.get<Blob>(endpoints.assets.qr(id), {  
+      responseType: "blob",  
+    });  
     return data;
-  },
-
-  markPrinted: async (ids: string[]) => {
-    const { data } = await http.post<ApiResponse<{ marked: number }>>(
-      endpoints.assets.markPrinted,
-      { ids },
-    );
-    return data;
-  },
+  },  
+  
+  markPrinted: async (ids: string[]) => {  
+    const { data } = await http.post<ApiResponse<{ marked: number }>>(  
+      endpoints.assets.markPrinted,  
+      { ids },  
+    );  
+    return data;  
+  },  
 };

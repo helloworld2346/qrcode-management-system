@@ -90,3 +90,12 @@ export function useDeleteAsset() {
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.all }),
   });
 }
+
+export function useMarkPrinted() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) =>
+      must(await assetsApi.markPrinted(ids), "Đánh dấu đã in thất bại"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.all }),
+  });
+}

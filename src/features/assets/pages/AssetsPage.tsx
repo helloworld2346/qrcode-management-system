@@ -4,13 +4,15 @@ import { Link } from "react-router-dom";
 
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { useAssets } from "@/features/assets/assets.hooks";
+import { useAssets, useMarkPrinted } from "@/features/assets/assets.hooks";
 import {
   statusColor,
   statusLabel,
   statusMeta,
   type AssetStatus,
 } from "@/features/assets/assets.types";
+import type { LabelPreset } from "@/features/print/print.api";
+import { usePrintLabels } from "@/features/print/print.hooks";
 import { useAuthStore } from "@/store/auth.store";
 
 export function AssetsPage() {
@@ -19,6 +21,8 @@ export function AssetsPage() {
   const [statusFilter, setStatusFilter] = useState<AssetStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [preset, setPreset] = useState<LabelPreset>("A4-3x8");
 
   const { data, isLoading, error } = useAssets({
     q: query || undefined,
@@ -31,6 +35,9 @@ export function AssetsPage() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
+  const printMut = usePrintLabels();
+  const markMut = useMarkPrinted();
+
   const handleQuery = (v: string) => {
     setQuery(v);
     setPage(1);
@@ -38,6 +45,39 @@ export function AssetsPage() {
   const handleStatus = (v: AssetStatus | "all") => {
     setStatusFilter(v);
     setPage(1);
+  };
+
+  const toggleOne = (id: string) =>
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  const pageIds = items.map((a) => a.id);
+  const allOnPageSelected =
+    pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
+  const toggleAllOnPage = () =>
+    setSelected((prev) =>
+      allOnPageSelected
+        ? prev.filter((id) => !pageIds.includes(id))
+        : [...prev, ...pageIds.filter((id) => !prev.includes(id))],
+    );
+
+  const handlePrintSelected = () => {
+    if (selected.length === 0 || printMut.isPending) return;
+    const ids = [...selected];
+    printMut.mutate(
+      { ids, label_preset: preset },
+      {
+        onSuccess: (blob) => {
+          const url = URL.createObjectURL(blob);
+          window.open(url, "_blank");
+          // giải phóng sau khi tab mới đã nạp
+          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+          markMut.mutate(ids, {
+            onSuccess: () => setSelected([]),
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -72,52 +112,93 @@ export function AssetsPage() {
         </div>
       </div>
 
-      <div className="mb-4 flex flex-wrap">
-        <button
-          type="button"
-          onClick={() => handleStatus("all")}
-          className={`mb-2 mr-2 inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-            statusFilter === "all"
-              ? "bg-primary text-white"
-              : "border border-border bg-surface text-text hover:border-primary"
-          }`}
-        >
-          Tất cả
-        </button>
-        {statusMeta.map((s) => {
-          const active = statusFilter === s.value;
-          return (
-            <button
-              key={s.value}
-              type="button"
-              onClick={() => handleStatus(s.value)}
-              style={
-                active
-                  ? { backgroundColor: statusColor[s.value], color: "#fff" }
-                  : undefined
-              }
-              className={`mb-2 mr-2 inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                active
-                  ? ""
-                  : "border border-border bg-surface text-text hover:border-primary"
-              }`}
+      <div className="mb-4 flex flex-wrap items-center justify-between">
+        <div className="flex flex-wrap">
+          <button
+            type="button"
+            onClick={() => handleStatus("all")}
+            className={`mb-2 mr-2 inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+              statusFilter === "all"
+                ? "bg-primary text-white"
+                : "border border-border bg-surface text-text hover:border-primary"
+            }`}
+          >
+            Tất cả
+          </button>
+          {statusMeta.map((s) => {
+            const active = statusFilter === s.value;
+            return (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => handleStatus(s.value)}
+                style={
+                  active
+                    ? { backgroundColor: statusColor[s.value], color: "#fff" }
+                    : undefined
+                }
+                className={`mb-2 mr-2 inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  active
+                    ? ""
+                    : "border border-border bg-surface text-text hover:border-primary"
+                }`}
+              >
+                <span
+                  className="mr-2 inline-block h-2 w-2 rounded-full"
+                  style={{
+                    backgroundColor: active ? "#fff" : statusColor[s.value],
+                  }}
+                />
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {selected.length > 0 && (
+          <div className="mb-2 flex items-center">
+            <span className="mr-3 text-sm text-text text-opacity-60">
+              Đã chọn {selected.length}
+            </span>
+            <select
+              value={preset}
+              onChange={(e) => setPreset(e.target.value as LabelPreset)}
+              className="mr-3 rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none"
             >
-              <span
-                className="mr-2 inline-block h-2 w-2 rounded-full"
-                style={{
-                  backgroundColor: active ? "#fff" : statusColor[s.value],
-                }}
-              />
-              {s.label}
+              <option value="A4-3x8">A4 — 3×8 (24 tem/trang)</option>
+              <option value="A4-2x5">A4 — 2×5 (10 tem/trang)</option>
+            </select>
+            <button
+              type="button"
+              onClick={handlePrintSelected}
+              disabled={printMut.isPending || markMut.isPending}
+              className="flex items-center whitespace-nowrap rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+            >
+              <FiPrinter className="mr-2" size={15} />
+              {printMut.isPending ? "Đang in..." : "In tem đã chọn"}
             </button>
-          );
-        })}
+          </div>
+        )}
       </div>
+
+      {printMut.isError && (
+        <div className="mb-4 rounded-lg border border-red-500 bg-red-500 bg-opacity-10 px-4 py-2 text-sm text-red-500">
+          {(printMut.error as Error).message}
+        </div>
+      )}
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-border text-xs uppercase text-text text-opacity-50">
+              <th className="px-5 py-3 font-semibold">
+                <input
+                  type="checkbox"
+                  checked={allOnPageSelected}
+                  onChange={toggleAllOnPage}
+                  aria-label="Chọn tất cả"
+                />
+              </th>
               <th className="px-5 py-3 font-semibold">#</th>
               <th className="px-5 py-3 font-semibold">Mã</th>
               <th className="px-5 py-3 font-semibold">Tên tài sản</th>
@@ -130,19 +211,25 @@ export function AssetsPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-text text-opacity-50">
+                <td
+                  colSpan={8}
+                  className="px-5 py-10 text-center text-text text-opacity-50"
+                >
                   Đang tải...
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-red-500">
+                <td colSpan={8} className="px-5 py-10 text-center text-red-500">
                   {(error as Error).message}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-text text-opacity-50">
+                <td
+                  colSpan={8}
+                  className="px-5 py-10 text-center text-text text-opacity-50"
+                >
                   Không tìm thấy tài sản phù hợp.
                 </td>
               </tr>
@@ -152,6 +239,14 @@ export function AssetsPage() {
                   key={a.id}
                   className="border-b border-border transition-colors hover:bg-primary hover:bg-opacity-5"
                 >
+                  <td className="px-5 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(a.id)}
+                      onChange={() => toggleOne(a.id)}
+                      aria-label={`Chọn ${a.code}`}
+                    />
+                  </td>
                   <td className="px-5 py-3 text-text text-opacity-60">
                     {(page - 1) * pageSize + idx + 1}
                   </td>
