@@ -6,6 +6,7 @@ export type LabelPreset = "A4-3x8" | "A4-2x5";
 export interface PrintLabelsRequest {
   ids: string[];
   label_preset?: LabelPreset;
+  copies?: number;
 }
 
 async function parseBlobError(err: unknown): Promise<never> {
