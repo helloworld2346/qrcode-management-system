@@ -28,7 +28,9 @@ export function InventoryPage() {
   const isAdmin = user?.role === "admin";
 
   const [name, setName] = useState("");
-  const [scopeType, setScopeType] = useState<"DEPARTMENT" | "CATEGORY">("DEPARTMENT");
+  const [scopeType, setScopeType] = useState<"DEPARTMENT" | "CATEGORY">(
+    "DEPARTMENT",
+  );
   const [scopeId, setScopeId] = useState("");
   const [createErr, setCreateErr] = useState("");
   const [active, setActive] = useState<InventorySession | null>(null);
@@ -44,12 +46,14 @@ export function InventoryPage() {
   const { data: departments } = useQuery({
     queryKey: ["departments"],
     enabled: scopeType === "DEPARTMENT" && isAdmin,
-    queryFn: async () => pickData(await departmentsApi.list(1, 100))?.items ?? [],
+    queryFn: async () =>
+      pickData(await departmentsApi.list(1, 100))?.items ?? [],
   });
   const { data: categories } = useQuery({
     queryKey: ["categories"],
     enabled: scopeType === "CATEGORY",
-    queryFn: async () => pickData(await categoriesApi.list(1, 100))?.items ?? [],
+    queryFn: async () =>
+      pickData(await categoriesApi.list(1, 100))?.items ?? [],
   });
   const { data: report, refetch: refetchReport } = useQuery({
     queryKey: keys.report(active?.id ?? ""),
@@ -62,10 +66,14 @@ export function InventoryPage() {
       const res = await inventoryApi.create({
         name: name.trim(),
         scope_type: scopeType,
-        scope_id: scopeType === "DEPARTMENT" && !isAdmin ? user?.departmentId ?? "" : scopeId,
+        scope_id:
+          scopeType === "DEPARTMENT" && !isAdmin
+            ? user?.departmentId ?? ""
+            : scopeId,
       });
       const d = pickData(res);
-      if (!res.ok || !d) throw new Error(res.error?.message || "Tạo phiên thất bại");
+      if (!res.ok || !d)
+        throw new Error(res.error?.message || "Tạo phiên thất bại");
       return d;
     },
     onSuccess: (s) => {
@@ -110,8 +118,14 @@ export function InventoryPage() {
 
   const scopeOptions =
     scopeType === "DEPARTMENT"
-      ? (departments ?? []).map((d) => ({ value: d.id, label: `${d.name} (${d.code})` }))
-      : (categories ?? []).map((c) => ({ value: c.id, label: `${c.name} (${c.code})` }));
+      ? (departments ?? []).map((d) => ({
+          value: d.id,
+          label: `${d.name} (${d.code})`,
+        }))
+      : (categories ?? []).map((c) => ({
+          value: c.id,
+          label: `${c.name} (${c.code})`,
+        }));
 
   return (
     <div>
@@ -126,11 +140,15 @@ export function InventoryPage() {
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-text text-opacity-60">
           Phiên mới
         </h2>
-        <div className="flex flex-wrap items-end gap-3">
-          <FormField label="Tên phiên" required className="w-64">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Kiểm kê Q4" />
+        <div className="flex flex-wrap items-end">
+          <FormField label="Tên phiên" required className="mb-3 mr-3 w-64">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Kiểm kê Q4"
+            />
           </FormField>
-          <FormField label="Phạm vi" required className="w-44">
+          <FormField label="Phạm vi" required className="mb-3 mr-3 w-44">
             <FormSelect
               value={scopeType}
               onChange={(v) => {
@@ -144,7 +162,11 @@ export function InventoryPage() {
             />
           </FormField>
           {(isAdmin || scopeType === "CATEGORY") && (
-            <FormField label={scopeType === "DEPARTMENT" ? "Đơn vị" : "Danh mục"} required className="w-56">
+            <FormField
+              label={scopeType === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}
+              required
+              className="mb-3 mr-3 w-56"
+            >
               <FormSelect
                 value={scopeId}
                 onChange={setScopeId}
@@ -154,6 +176,7 @@ export function InventoryPage() {
             </FormField>
           )}
           <Button
+            className="mb-3"
             type="button"
             disabled={
               !name.trim() ||
@@ -183,13 +206,19 @@ export function InventoryPage() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-text text-opacity-60">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
                   Đang tải...
                 </td>
               </tr>
             ) : !sessions || sessions.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-text text-opacity-60">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
                   Chưa có phiên kiểm kê nào.
                 </td>
               </tr>
@@ -203,7 +232,8 @@ export function InventoryPage() {
                 >
                   <td className="px-4 py-3 font-medium text-text">{s.name}</td>
                   <td className="px-4 py-3 text-text text-opacity-70">
-                    {s.scope_type === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}: {s.scope_id}
+                    {s.scope_type === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}:{" "}
+                    {s.scope_id}
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -220,11 +250,11 @@ export function InventoryPage() {
                     {new Date(s.created_at).toLocaleString("vi-VN")}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center">
                       <button
                         type="button"
                         onClick={() => setActive(s)}
-                        className="rounded-lg border border-border px-3 py-1 text-xs font-medium text-text hover:border-primary"
+                        className="mr-2 rounded-lg border border-border px-3 py-1 text-xs font-medium text-text hover:border-primary"
                       >
                         {active?.id === s.id ? "Đang xem" : "Xem / Quét"}
                       </button>
@@ -254,15 +284,16 @@ export function InventoryPage() {
           </h2>
 
           {active.status === "OPEN" && (
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-4 flex items-center">
               <Input
                 value={scanCode}
                 onChange={(e) => setScanCode(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && scanCode.trim()) scanMut.mutate(scanCode.trim());
+                  if (e.key === "Enter" && scanCode.trim())
+                    scanMut.mutate(scanCode.trim());
                 }}
                 placeholder="Nhập/quét mã tài sản..."
-                className="w-72"
+                className="mr-3 w-72"
               />
               <Button
                 type="button"
@@ -277,52 +308,74 @@ export function InventoryPage() {
           {scanMsg && <p className="mb-4 text-sm text-primary">{scanMsg}</p>}
 
           {report && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div className="rounded-xl border border-border p-4">
-                <h3 className="mb-2 flex items-center text-sm font-semibold text-green-600">
-                  <FiCheckCircle className="mr-2" />
-                  Đã quét ({report.scanned_ok?.length ?? 0})
-                </h3>
-                <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
-                  {(report.scanned_ok ?? []).map((s) => (
-                    <li key={s.id}>
-                      <Link to={`/dashboard/assets/${s.asset_code}`} className="text-primary hover:underline">
-                        {s.asset_code}
-                      </Link>{" "}
-                      <span className="text-text text-opacity-70">— {s.asset_name}</span>
-                    </li>
-                  ))}
-                </ul>
+            <div className="-mx-2 flex flex-wrap">
+              <div className="mb-4 w-full px-2 md:w-1/3">
+                <div className="rounded-xl border border-border p-4">
+                  <h3 className="mb-2 flex items-center text-sm font-semibold text-green-600">
+                    <FiCheckCircle className="mr-2" />
+                    Đã quét ({report.scanned_ok?.length ?? 0})
+                  </h3>
+                  <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
+                    {(report.scanned_ok ?? []).map((s) => (
+                      <li key={s.id}>
+                        <Link
+                          to={`/dashboard/assets/${s.asset_code}`}
+                          className="text-primary hover:underline"
+                        >
+                          {s.asset_code}
+                        </Link>{" "}
+                        <span className="text-text text-opacity-70">
+                          — {s.asset_name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <div className="rounded-xl border border-border p-4">
-                <h3 className="mb-2 text-sm font-semibold text-red-500">
-                  Thiếu ({report.missing?.length ?? 0}/{report.total_expected})
-                </h3>
-                <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
-                  {(report.missing ?? []).map((s) => (
-                    <li key={s.asset_id}>
-                      <Link to={`/dashboard/assets/${s.asset_code}`} className="text-primary hover:underline">
-                        {s.asset_code}
-                      </Link>{" "}
-                      <span className="text-text text-opacity-70">— {s.asset_name}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="mb-4 w-full px-2 md:w-1/3">
+                <div className="rounded-xl border border-border p-4">
+                  <h3 className="mb-2 text-sm font-semibold text-red-500">
+                    Thiếu ({report.missing?.length ?? 0}/{report.total_expected}
+                    )
+                  </h3>
+                  <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
+                    {(report.missing ?? []).map((s) => (
+                      <li key={s.asset_id}>
+                        <Link
+                          to={`/dashboard/assets/${s.asset_code}`}
+                          className="text-primary hover:underline"
+                        >
+                          {s.asset_code}
+                        </Link>{" "}
+                        <span className="text-text text-opacity-70">
+                          — {s.asset_name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-              <div className="rounded-xl border border-border p-4">
-                <h3 className="mb-2 text-sm font-semibold text-amber-600">
-                  Ngoài phạm vi ({report.unexpected?.length ?? 0})
-                </h3>
-                <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
-                  {(report.unexpected ?? []).map((s) => (
-                    <li key={s.id}>
-                      <Link to={`/dashboard/assets/${s.asset_code}`} className="text-primary hover:underline">
-                        {s.asset_code}
-                      </Link>{" "}
-                      <span className="text-text text-opacity-70">— {s.asset_name}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="mb-4 w-full px-2 md:w-1/3">
+                <div className="rounded-xl border border-border p-4">
+                  <h3 className="mb-2 text-sm font-semibold text-amber-600">
+                    Ngoài phạm vi ({report.unexpected?.length ?? 0})
+                  </h3>
+                  <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">
+                    {(report.unexpected ?? []).map((s) => (
+                      <li key={s.id}>
+                        <Link
+                          to={`/dashboard/assets/${s.asset_code}`}
+                          className="text-primary hover:underline"
+                        >
+                          {s.asset_code}
+                        </Link>{" "}
+                        <span className="text-text text-opacity-70">
+                          — {s.asset_name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           )}
@@ -332,7 +385,11 @@ export function InventoryPage() {
       <ConfirmDialog
         open={!!closeTarget}
         title="Đóng phiên kiểm kê"
-        message={closeTarget ? `Đóng phiên "${closeTarget.name}"? Sau khi đóng không quét thêm được.` : ""}
+        message={
+          closeTarget
+            ? `Đóng phiên "${closeTarget.name}"? Sau khi đóng không quét thêm được.`
+            : ""
+        }
         confirmLabel="Đóng phiên"
         loading={closeMut.isPending}
         error={closeErr}

@@ -164,16 +164,28 @@ export function CategoryDetailPage() {
           <tbody>
             {attrs.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-text text-opacity-60">
+                <td
+                  colSpan={7}
+                  className="px-4 py-8 text-center text-text text-opacity-60"
+                >
                   Chưa có thuộc tính nào — bấm "Thêm thuộc tính" để gắn.
                 </td>
               </tr>
             ) : (
               attrs.map((attr, i) => (
-                <tr key={attr.attribute_id} className="border-b border-border last:border-b-0">
-                  <td className="px-4 py-3 text-text text-opacity-60">{i + 1}</td>
-                  <td className="px-4 py-3 font-medium text-text">{attr.code}</td>
-                  <td className="px-4 py-3 text-text text-opacity-80">{attr.name}</td>
+                <tr
+                  key={attr.attribute_id}
+                  className="border-b border-border last:border-b-0"
+                >
+                  <td className="px-4 py-3 text-text text-opacity-60">
+                    {i + 1}
+                  </td>
+                  <td className="px-4 py-3 font-medium text-text">
+                    {attr.code}
+                  </td>
+                  <td className="px-4 py-3 text-text text-opacity-80">
+                    {attr.name}
+                  </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary">
                       {attr.data_type}
@@ -211,7 +223,7 @@ export function CategoryDetailPage() {
 
       {modalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
+          className="fixed top-0 right-0 bottom-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
           onClick={() => setModalOpen(false)}
         >
           <form
@@ -249,9 +261,7 @@ export function CategoryDetailPage() {
                   {selected.data_type}
                 </span>
                 {selected.options?.length ? (
-                  <span>
-                    Options: {selected.options.join(", ")}
-                  </span>
+                  <span>Options: {selected.options.join(", ")}</span>
                 ) : selected.validation_regex ? (
                   <span>
                     Kiểm tra: <code>{selected.validation_regex}</code>
@@ -270,7 +280,9 @@ export function CategoryDetailPage() {
                       type="button"
                       aria-label="Giảm"
                       onClick={() =>
-                        setSortOrder(String(Math.max(0, (Number(sortOrder) || 0) - 1)))
+                        setSortOrder(
+                          String(Math.max(0, (Number(sortOrder) || 0) - 1)),
+                        )
                       }
                       className="flex w-10 items-center justify-center bg-primary bg-opacity-5 text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
                     >
@@ -325,10 +337,14 @@ export function CategoryDetailPage() {
                   }`}
                 />
               </span>
-              <span className="text-sm text-text">Bắt buộc nhập khi tạo tài sản</span>
+              <span className="text-sm text-text">
+                Bắt buộc nhập khi tạo tài sản
+              </span>
             </button>
 
-            {formError && <p className="mb-3 text-xs text-accent">{formError}</p>}
+            {formError && (
+              <p className="mb-3 text-xs text-accent">{formError}</p>
+            )}
 
             <div className="flex justify-end">
               <button

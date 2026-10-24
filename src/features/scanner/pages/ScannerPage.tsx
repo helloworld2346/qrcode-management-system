@@ -7,8 +7,6 @@ import { useAssetByCode } from "@/features/assets/assets.hooks";
 import { statusColor, statusLabel } from "@/features/assets/assets.types";
 import { errorMessage } from "@/types/api.types";
 
-// QR text mode: TS|code|name|category|dept|status → lấy field 2
-// QR url mode: .../scan/code → lấy phần cuối
 function parseCode(raw: string): string {
   const s = raw.trim();
   if (s.startsWith("TS|")) return s.split("|")[1] ?? "";
@@ -72,26 +70,28 @@ export function ScannerPage() {
   return (
     <div>
       <div className="mb-4 rounded-2xl border border-border bg-surface px-5 py-4">
-        <h1 className="text-2xl font-bold tracking-tight text-text">Quét / Tra cứu</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-text">
+          Quét / Tra cứu
+        </h1>
         <p className="mt-1 text-sm text-text text-opacity-60">
           Nhập mã tài sản hoặc quét QR để xem thông tin đầy đủ.
         </p>
       </div>
 
       <div className="mb-4 rounded-2xl border border-border bg-surface px-5 py-4">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && lookup()}
             placeholder="Nhập mã (VD: Oc1hPFfNDsCR) hoặc dán nội dung QR"
-            className="w-full sm:w-96"
+            className="mb-2 mr-3 w-full sm:w-96"
           />
           <button
             type="button"
             onClick={lookup}
             disabled={!input.trim() || isFetching}
-            className="flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+            className="mb-2 mr-3 flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
           >
             <FiSearch className="mr-2" size={15} />
             {isFetching ? "Đang tìm..." : "Tra cứu"}
@@ -102,9 +102,13 @@ export function ScannerPage() {
               setCameraErr("");
               setCameraOn((v) => !v);
             }}
-            className="flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-text hover:border-primary"
+            className="mb-2 flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-text hover:border-primary"
           >
-            {cameraOn ? <FiCameraOff className="mr-2" size={15} /> : <FiCamera className="mr-2" size={15} />}
+            {cameraOn ? (
+              <FiCameraOff className="mr-2" size={15} />
+            ) : (
+              <FiCamera className="mr-2" size={15} />
+            )}
             {cameraOn ? "Tắt camera" : "Quét bằng camera"}
           </button>
         </div>
@@ -113,7 +117,10 @@ export function ScannerPage() {
 
       {cameraOn && (
         <div className="mb-4 rounded-2xl border border-border bg-surface p-4">
-          <div id={divId} className="mx-auto w-full max-w-sm overflow-hidden rounded-xl" />
+          <div
+            id={divId}
+            className="mx-auto w-full max-w-sm overflow-hidden rounded-xl"
+          />
         </div>
       )}
 
@@ -144,7 +151,9 @@ export function ScannerPage() {
             </div>
             <div className="flex py-2">
               <dt className="w-32 text-text text-opacity-50">Danh mục</dt>
-              <dd className="font-medium text-text">{asset.category_name ?? "-"}</dd>
+              <dd className="font-medium text-text">
+                {asset.category_name ?? "-"}
+              </dd>
             </div>
             <div className="flex py-2">
               <dt className="w-32 text-text text-opacity-50">Ngày tạo</dt>
@@ -156,7 +165,13 @@ export function ScannerPage() {
               <div key={k} className="flex py-2">
                 <dt className="w-32 text-text text-opacity-50">{k}</dt>
                 <dd className="font-medium text-text">
-                  {Array.isArray(v) ? v.join(", ") : typeof v === "boolean" ? (v ? "Có" : "Không") : String(v ?? "-")}
+                  {Array.isArray(v)
+                    ? v.join(", ")
+                    : typeof v === "boolean"
+                      ? v
+                        ? "Có"
+                        : "Không"
+                      : String(v ?? "-")}
                 </dd>
               </div>
             ))}

@@ -365,7 +365,7 @@ export function AccountsPage() {
 
       {resetTarget && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
+          className="fixed top-0 right-0 bottom-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
           onClick={() => setResetTarget(null)}
         >
           <form
@@ -414,7 +414,7 @@ export function AccountsPage() {
 
       {lockTarget && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
+          className="fixed top-0 right-0 bottom-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
           onClick={() => setLockTarget(null)}
         >
           <div

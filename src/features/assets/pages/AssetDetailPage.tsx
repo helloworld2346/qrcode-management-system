@@ -4,7 +4,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormSelect } from "@/components/ui/FormSelect";
-
 import {
   useAssetByCode,
   useAssetHistory,
@@ -171,7 +170,9 @@ export function AssetDetailPage() {
                   key={r.label}
                   className="flex border-b border-border py-3 last:border-b-0"
                 >
-                  <dt className="w-40 text-sm text-text text-opacity-50">{r.label}</dt>
+                  <dt className="w-40 text-sm text-text text-opacity-50">
+                    {r.label}
+                  </dt>
                   <dd className="text-sm font-medium text-text">{r.value}</dd>
                 </div>
               ))}
@@ -189,7 +190,9 @@ export function AssetDetailPage() {
                     key={r.label}
                     className="flex border-b border-border py-3 last:border-b-0"
                   >
-                    <dt className="w-40 text-sm text-text text-opacity-50">{r.label}</dt>
+                    <dt className="w-40 text-sm text-text text-opacity-50">
+                      {r.label}
+                    </dt>
                     <dd className="text-sm font-medium text-text">{r.value}</dd>
                   </div>
                 ))}
@@ -201,33 +204,37 @@ export function AssetDetailPage() {
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text text-opacity-50">
               Đổi trạng thái
             </h2>
-            <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-wrap items-end">
               <FormSelect
                 value={newStatus}
                 onChange={(v) => setNewStatus(v as AssetStatus)}
                 placeholder="-- Trạng thái mới --"
-                className="w-56"
+                className="mb-3 mr-3 w-56"
                 options={statusMeta
                   .filter((s) => s.value !== asset.status)
-                  .filter((s) => s.value !== "LIQUIDATED" || user?.role === "admin")
+                  .filter(
+                    (s) => s.value !== "LIQUIDATED" || user?.role === "admin",
+                  )
                   .map((s) => ({ value: s.value, label: s.label }))}
               />
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Ghi chú"
-                className="w-56 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
+                className="mb-3 mr-3 w-56 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text"
               />
               <button
                 type="button"
                 onClick={submitStatus}
                 disabled={!newStatus || statusMut.isPending}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="mb-3 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 {statusMut.isPending ? "Đang đổi..." : "Đổi"}
               </button>
             </div>
-            {statusErr && <p className="mt-2 text-sm text-red-500">{statusErr}</p>}
+            {statusErr && (
+              <p className="mt-2 text-sm text-red-500">{statusErr}</p>
+            )}
           </div>
 
           <div className="rounded-2xl border border-border bg-surface p-5">
@@ -266,12 +273,21 @@ export function AssetDetailPage() {
             </h2>
             <div className="mb-4 flex items-center justify-center rounded-xl border border-border bg-white py-6">
               {qrUrl ? (
-                <img src={qrUrl} alt={`QR ${asset.code}`} width={160} height={160} />
+                <img
+                  src={qrUrl}
+                  alt={`QR ${asset.code}`}
+                  width={160}
+                  height={160}
+                />
               ) : (
-                <span className="text-xs text-text text-opacity-40">Đang tải QR...</span>
+                <span className="text-xs text-text text-opacity-40">
+                  Đang tải QR...
+                </span>
               )}
             </div>
-            <p className="text-center text-xs text-text text-opacity-50">{asset.code}</p>
+            <p className="text-center text-xs text-text text-opacity-50">
+              {asset.code}
+            </p>
           </div>
         </div>
       </div>
