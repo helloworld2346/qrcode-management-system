@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { FiSave } from "react-icons/fi";
 import { Link } from "react-router-dom";
@@ -143,12 +143,6 @@ export function AssetForm({
     watchCategoryId ?? "",
   );
 
-  useEffect(() => {
-    if (!isAdmin && user?.departmentId) {
-      setValue("department_id", user.departmentId);
-    }
-  }, [isAdmin, user, setValue]);
-
   const categoryOptions = useMemo(
     () =>
       categories.map((c) => ({ value: c.id, label: `${c.name} (${c.code})` })),
@@ -157,10 +151,6 @@ export function AssetForm({
   const deptOptions = useMemo(
     () => departments.map((d) => ({ value: d.id, label: d.name })),
     [departments],
-  );
-  const userDeptName = useMemo(
-    () => departments.find((d) => d.id === user?.departmentId)?.name,
-    [departments, user],
   );
   const schema = useMemo(
     () =>
@@ -197,7 +187,7 @@ export function AssetForm({
                 label="Danh mục"
                 required
                 error={errors.category_id?.message}
-                className="mb-4 w-full md:w-1/2 md:pr-2"
+                className={`mb-4 w-full ${isAdmin ? "md:w-1/2 md:pr-2" : ""}`}
               >
                 <Controller
                   name="category_id"
@@ -218,7 +208,7 @@ export function AssetForm({
                 />
               </FormField>
 
-              {isAdmin ? (
+              {isAdmin && (
                 <FormField
                   label="Đơn vị"
                   className="mb-4 w-full md:w-1/2 md:pl-2"
@@ -239,15 +229,6 @@ export function AssetForm({
                     )}
                   />
                 </FormField>
-              ) : (
-                <FormField
-                  label="Đơn vị"
-                  className="mb-4 w-full md:w-1/2 md:pl-2"
-                >
-                  <div className="flex h-[38px] items-center rounded-lg border border-border bg-bg px-3 text-sm text-text text-opacity-70">
-                    {userDeptName ?? "Đơn vị của bạn"}
-                  </div>
-                </FormField>
               )}
 
               {watchCategoryId && loadingAttrs && (
@@ -256,12 +237,12 @@ export function AssetForm({
                 </p>
               )}
 
-              {schema.map((attr) => (
+              {schema.map((attr, i) => (
                 <FormField
                   key={attr.attribute_id}
                   label={attr.name}
                   required={attr.is_required}
-                  className="mb-4 w-full md:w-1/2 md:pr-2"
+                  className={`mb-4 w-full md:w-1/2 ${i % 2 === 0 ? "md:pr-2" : "md:pl-2"}`}
                 >
                   <AttributeInput
                     attr={attr}

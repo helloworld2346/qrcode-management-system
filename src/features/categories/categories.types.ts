@@ -14,6 +14,7 @@ export interface Category {
   name: string;
   code: string;
   attributes?: CategoryAttribute[];
+  attribute_count?: number;
 }
 
 export interface CreateCategoryRequest {

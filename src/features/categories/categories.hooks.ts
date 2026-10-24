@@ -16,7 +16,6 @@ export interface CategoryListFilter {
 const keys = {
   all: ["categories"] as const,
   list: (filter: CategoryListFilter) => ["categories", "list", filter] as const,
-  options: ["categories", "options"] as const,
   detail: (id: string) => ["categories", id] as const,
 };
 
