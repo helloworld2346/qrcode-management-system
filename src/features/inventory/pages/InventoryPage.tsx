@@ -7,6 +7,8 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormField } from "@/components/ui/FormField";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
+import { Pagination } from "@/components/ui/Pagination";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { useCategoryOptions } from "@/features/categories/categories.hooks";
 import { useDepartmentOptions } from "@/features/departments/departments.hooks";
 import { type InventorySession } from "@/features/inventory/inventory.api";
@@ -29,7 +31,6 @@ export function InventoryPage() {
     "DEPARTMENT",
   );
   const [scopeId, setScopeId] = useState("");
-  const [filterCategoryId, setFilterCategoryId] = useState("");
   const [createErr, setCreateErr] = useState("");
   const [active, setActive] = useState<InventorySession | null>(null);
   const [scanCode, setScanCode] = useState("");
@@ -37,16 +38,39 @@ export function InventoryPage() {
   const [closeTarget, setCloseTarget] = useState<InventorySession | null>(null);
   const [closeErr, setCloseErr] = useState("");
 
-  const { data: sessions, isLoading } = useInventorySessions();
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+
+  const { data, isLoading } = useInventorySessions({
+    q: query || undefined,
+    page,
+    size: pageSize,
+  });
   const { data: departments } = useDepartmentOptions();
   const { data: categories } = useCategoryOptions();
   const { data: report, refetch: refetchReport } = useInventoryReport(
     active?.id ?? "",
   );
 
+  const sessions = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
   const createMut = useCreateInventorySession();
   const closeMut = useCloseInventorySession();
   const scanMut = useScanInventory(active?.id ?? "");
+
+  const scopeName = (s: InventorySession) => {
+    const list = s.scope_type === "DEPARTMENT" ? departments : categories;
+    const found = (list ?? []).find((o) => o.id === s.scope_id);
+    return found ? `${found.name} (${found.code})` : s.scope_id;
+  };
+
+  const handleQuery = (v: string) => {
+    setQuery(v);
+    setPage(1);
+  };
 
   const handleCreate = () => {
     setCreateErr("");
@@ -58,17 +82,12 @@ export function InventoryPage() {
           scopeType === "DEPARTMENT" && !isAdmin
             ? user?.departmentId ?? ""
             : scopeId,
-        filter_category_id:
-          scopeType === "DEPARTMENT" && filterCategoryId
-            ? filterCategoryId
-            : undefined,
       },
       {
         onSuccess: (s) => {
           setActive(s);
           setName("");
           setScopeId("");
-          setFilterCategoryId("");
         },
         onError: (e) => setCreateErr(errorMessage(e)),
       },
@@ -101,11 +120,6 @@ export function InventoryPage() {
           label: `${c.name} (${c.code})`,
         }));
 
-  const categoryOptions = (categories ?? []).map((c) => ({
-    value: c.id,
-    label: `${c.name} (${c.code})`,
-  }));
-
   return (
     <div>
       <div className="mb-4 rounded-2xl border border-border bg-surface px-5 py-4">
@@ -120,7 +134,7 @@ export function InventoryPage() {
           Phiên mới
         </h2>
         <div className="-mx-1 flex flex-wrap items-end">
-          <div className="mb-3 mr-3 w-64">
+          <div className="mb-3 mr-3 w-72">
             <FormField label="Tên phiên" required>
               <Input
                 value={name}
@@ -129,14 +143,13 @@ export function InventoryPage() {
               />
             </FormField>
           </div>
-          <div className="mb-3 mr-3 w-44">
+          <div className="mb-3 mr-3 w-60">
             <FormField label="Phạm vi" required>
               <FormSelect
                 value={scopeType}
                 onChange={(v) => {
                   setScopeType(v as "DEPARTMENT" | "CATEGORY");
                   setScopeId("");
-                  setFilterCategoryId("");
                 }}
                 options={[
                   { value: "DEPARTMENT", label: "Theo đơn vị" },
@@ -146,7 +159,7 @@ export function InventoryPage() {
             </FormField>
           </div>
           {(isAdmin || scopeType === "CATEGORY") && (
-            <div className="mb-3 mr-3 w-56">
+            <div className="mb-3 mr-3 w-72">
               <FormField
                 label={scopeType === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}
                 required
@@ -156,18 +169,6 @@ export function InventoryPage() {
                   onChange={setScopeId}
                   placeholder="-- Chọn --"
                   options={scopeOptions}
-                />
-              </FormField>
-            </div>
-          )}
-          {scopeType === "DEPARTMENT" && (
-            <div className="mb-3 mr-3 w-56">
-              <FormField label="Lọc danh mục (tùy chọn)">
-                <FormSelect
-                  value={filterCategoryId}
-                  onChange={setFilterCategoryId}
-                  placeholder="-- Tất cả danh mục --"
-                  options={categoryOptions}
                 />
               </FormField>
             </div>
@@ -187,6 +188,15 @@ export function InventoryPage() {
           </Button>
         </div>
         {createErr && <p className="mt-2 text-xs text-accent">{createErr}</p>}
+      </div>
+
+      <div className="mb-3 w-full sm:w-96">
+        <SearchInput
+          value={query}
+          onChange={handleQuery}
+          placeholder="Tìm theo tên phiên..."
+          inputClassName="bg-surface"
+        />
       </div>
 
       <div className="mb-4 overflow-x-auto rounded-2xl border border-border bg-surface">
@@ -210,7 +220,7 @@ export function InventoryPage() {
                   Đang tải...
                 </td>
               </tr>
-            ) : !sessions || sessions.length === 0 ? (
+            ) : sessions.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
@@ -230,7 +240,7 @@ export function InventoryPage() {
                   <td className="px-4 py-3 font-medium text-text">{s.name}</td>
                   <td className="px-4 py-3 text-text text-opacity-70">
                     {s.scope_type === "DEPARTMENT" ? "Đơn vị" : "Danh mục"}:{" "}
-                    {s.scope_id}
+                    {scopeName(s)}
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -274,25 +284,29 @@ export function InventoryPage() {
         </table>
       </div>
 
+      <div className="mb-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          totalItems={total}
+          onPageChange={setPage}
+          onPageSizeChange={(sz) => {
+            setPageSize(sz);
+            setPage(1);
+          }}
+        />
+      </div>
+
       {active && (
         <div className="rounded-2xl border border-border bg-surface px-5 py-4">
-          <h2 className="mb-1 text-sm font-semibold uppercase tracking-wider text-text text-opacity-60">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-text text-opacity-60">
             Phiên: {active.name}
           </h2>
-          {active.filter_category_id && (
-            <p className="mb-3 text-xs text-text text-opacity-60">
-              Lọc danh mục:{" "}
-              <span className="font-medium text-text">
-                {(categories ?? []).find(
-                  (c) => c.id === active.filter_category_id,
-                )?.name ?? active.filter_category_id}
-              </span>
-            </p>
-          )}
 
           {active.status === "OPEN" && (
             <div className="mb-4 flex items-center">
-              <div className="mr-3 w-96">
+              <div className="mr-3 w-72">
                 <Input
                   value={scanCode}
                   onChange={(e) => setScanCode(e.target.value)}
@@ -305,7 +319,7 @@ export function InventoryPage() {
               </div>
               <Button
                 type="button"
-                className="inline-flex items-center shrink-0 whitespace-nowrap"
+                className="shrink-0 whitespace-nowrap"
                 disabled={!scanCode.trim() || scanMut.isPending}
                 onClick={() => handleScan(scanCode.trim())}
               >

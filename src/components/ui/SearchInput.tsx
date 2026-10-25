@@ -5,6 +5,7 @@ interface Props {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  inputClassName?: string;
 }
 
 export function SearchInput({
@@ -12,6 +13,7 @@ export function SearchInput({
   onChange,
   placeholder,
   className = "",
+  inputClassName = "",
 }: Props) {
   return (
     <div className={`relative ${className}`}>
@@ -24,7 +26,7 @@ export function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-3 text-sm text-text outline-none transition-colors placeholder:text-text placeholder:text-opacity-40 focus:border-primary"
+        className={`w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-3 text-sm text-text outline-none transition-colors placeholder:text-text placeholder:text-opacity-40 focus:border-primary ${inputClassName}`}
       />
     </div>
   );
