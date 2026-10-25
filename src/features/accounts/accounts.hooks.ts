@@ -107,3 +107,12 @@ export function useDeleteAccount() {
     onSuccess: () => qc.invalidateQueries({ queryKey: accountKeys.all }),
   });
 }
+
+export function useMe() {
+  return useQuery({
+    queryKey: [...accountKeys.all, "me"] as const,
+    queryFn: async () =>
+      must(await accountsApi.me(), "Không tải được thông tin tài khoản"),
+    staleTime: 5 * 60 * 1000,
+  });
+}

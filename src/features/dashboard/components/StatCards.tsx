@@ -6,8 +6,10 @@ import {
   FiCrosshair,
 } from "react-icons/fi";
 
+import { useMe } from "@/features/accounts/accounts.hooks";
 import { useDashboardStats } from "@/features/dashboard/dashboard.hooks";
 import { useChartColors } from "@/features/dashboard/hooks/useChartColors";
+import { useAuthStore } from "@/store/auth.store";
 
 interface StatItem {
   label: string;
@@ -19,19 +21,24 @@ interface StatItem {
 export function StatCards() {
   const { series } = useChartColors();
   const { data } = useDashboardStats();
+  const role = useAuthStore((s) => s.user?.role);
+  const { data: me } = useMe();
+
+  const scopeHint =
+    role === "admin" ? "Toàn đơn vị" : me?.department_name ?? "Đơn vị của bạn";
 
   const stats: StatItem[] = [
     {
       label: "Tổng tài sản",
       value: String(data?.total ?? "—"),
       icon: FiBox,
-      hint: "Toàn đơn vị",
+      hint: scopeHint,
     },
     {
       label: "Đang sử dụng",
       value: String(data?.in_use ?? "—"),
       icon: FiCrosshair,
-      hint: "Toàn đơn vị",
+      hint: scopeHint,
     },
     {
       label: "Đã quét hôm nay",

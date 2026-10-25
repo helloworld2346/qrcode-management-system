@@ -17,6 +17,12 @@ export const accountsApi = {
     );
     return data;
   },
+  me: async () => {
+    const { data } = await http.get<ApiResponse<Account>>(
+      endpoints.accounts.me,
+    );
+    return data;
+  },
   detail: async (id: string) => {
     const { data } = await http.get<ApiResponse<Account>>(
       endpoints.accounts.detail(id),
