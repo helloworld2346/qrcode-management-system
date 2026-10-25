@@ -1,5 +1,13 @@
 import { useState, type FormEvent } from "react";
-import { FiKey, FiLock, FiPlus, FiTrash2, FiUnlock, FiX } from "react-icons/fi";
+import {
+  FiEdit2,
+  FiKey,
+  FiLock,
+  FiPlus,
+  FiTrash2,
+  FiUnlock,
+  FiX,
+} from "react-icons/fi";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormField } from "@/components/ui/FormField";
@@ -14,6 +22,7 @@ import {
   useLockAccount,
   useResetPassword,
   useUnlockAccount,
+  useUpdateAccount,
 } from "@/features/accounts/accounts.hooks";
 import type { Account, AccountRole } from "@/features/accounts/accounts.types";
 import { useDepartmentOptions } from "@/features/departments/departments.hooks";
@@ -55,6 +64,13 @@ export function AccountsPage() {
   const unlockMut = useUnlockAccount();
   const resetMut = useResetPassword();
   const deleteMut = useDeleteAccount();
+  const updateMut = useUpdateAccount();
+
+  const [editTarget, setEditTarget] = useState<Account | null>(null);
+  const [editFullName, setEditFullName] = useState("");
+  const [editRole, setEditRole] = useState<AccountRole>("editor");
+  const [editDepartmentId, setEditDepartmentId] = useState("");
+  const [editErr, setEditErr] = useState("");
 
   const { data: departments } = useDepartmentOptions();
 
@@ -101,6 +117,39 @@ export function AccountsPage() {
           setFormOpen(false);
         },
         onError: (e2) => setErr(errorMessage(e2)),
+      },
+    );
+  };
+
+  const openEdit = (a: Account) => {
+    setEditTarget(a);
+    setEditFullName(a.full_name ?? "");
+    setEditRole(a.role);
+    setEditDepartmentId(a.department_id ?? "");
+    setEditErr("");
+  };
+
+  const submitEdit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!editTarget) return;
+    setEditErr("");
+    if (editRole !== "admin" && !editDepartmentId) {
+      setEditErr("Vui lòng chọn đơn vị cho tài khoản editor/viewer.");
+      return;
+    }
+    updateMut.mutate(
+      {
+        id: editTarget.id,
+        payload: {
+          full_name: editFullName.trim(),
+          role: editRole,
+          department_id:
+            editRole === "admin" ? undefined : editDepartmentId || undefined,
+        },
+      },
+      {
+        onSuccess: () => setEditTarget(null),
+        onError: (e2) => setEditErr(errorMessage(e2)),
       },
     );
   };
@@ -327,6 +376,15 @@ export function AccountsPage() {
                     <div className="flex items-center justify-end">
                       <button
                         type="button"
+                        aria-label="Sửa tài khoản"
+                        title="Sửa tài khoản"
+                        onClick={() => openEdit(a)}
+                        className="mx-1 flex h-8 w-8 items-center justify-center rounded-lg text-text text-opacity-60 transition-colors hover:bg-primary hover:bg-opacity-10 hover:text-primary"
+                      >
+                        <FiEdit2 size={15} />
+                      </button>
+                      <button
+                        type="button"
                         aria-label="Đặt lại mật khẩu"
                         title="Đặt lại mật khẩu"
                         onClick={() => openReset(a)}
@@ -384,6 +442,79 @@ export function AccountsPage() {
           }}
         />
       </div>
+
+      {editTarget && (
+        <div
+          className="fixed top-0 right-0 bottom-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4"
+          onClick={() => setEditTarget(null)}
+        >
+          <form
+            onSubmit={submitEdit}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 shadow-xl"
+          >
+            <h2 className="mb-1 text-base font-semibold text-text">
+              Sửa tài khoản
+            </h2>
+            <p className="mb-4 text-sm text-text text-opacity-60">
+              Tên đăng nhập{" "}
+              <span className="font-medium text-text">
+                {editTarget.username}
+              </span>{" "}
+              (không đổi được)
+            </p>
+            <div className="mb-3">
+              <FormField label="Họ tên" required>
+                <Input
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  placeholder="Nguyễn Văn A"
+                  required
+                />
+              </FormField>
+            </div>
+            <div className="mb-3">
+              <FormField label="Vai trò" required>
+                <FormSelect
+                  value={editRole}
+                  onChange={(v) => setEditRole(v as AccountRole)}
+                  options={ROLE_OPTIONS}
+                />
+              </FormField>
+            </div>
+            <div className="mb-3">
+              <FormField label="Đơn vị" required={editRole !== "admin"}>
+                <FormSelect
+                  value={editDepartmentId}
+                  onChange={setEditDepartmentId}
+                  placeholder="-- Chọn đơn vị --"
+                  options={(departments ?? []).map((d) => ({
+                    value: d.id,
+                    label: `${d.name} (${d.code})`,
+                  }))}
+                />
+              </FormField>
+            </div>
+            {editErr && <p className="mb-3 text-xs text-accent">{editErr}</p>}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setEditTarget(null)}
+                className="mr-2 rounded-lg px-4 py-2 text-sm font-medium text-text text-opacity-70 transition-colors hover:bg-primary hover:bg-opacity-10"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={updateMut.isPending}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+              >
+                {updateMut.isPending ? "Đang lưu..." : "Lưu"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {resetTarget && (
         <div

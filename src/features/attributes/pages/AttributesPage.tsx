@@ -205,11 +205,11 @@ export function AttributesPage() {
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="VD: Chủng loại"
+                placeholder="VD: Cấu hình"
               />
             </FormField>
           </div>
-          <div className="mb-3 w-full pl-0 sm:w-1/2 sm:pl-2 lg:w-1/4">
+          <div className="mb-3 w-full pr-3 sm:w-1/2 sm:pl-2 lg:w-1/4">
             <FormField label="Mã (code)" required>
               <Input
                 value={codeTouched ? code : slugify(name)}
@@ -217,11 +217,11 @@ export function AttributesPage() {
                   setCodeTouched(true);
                   setCode(e.target.value);
                 }}
-                placeholder="chung_loai"
+                placeholder="cau_hinh"
               />
             </FormField>
           </div>
-          <div className="mb-3 w-full pr-0 sm:w-1/2 sm:pr-2 lg:w-1/4">
+          <div className="mb-3 w-full pr-3 sm:w-1/2 sm:pr-2 lg:w-1/4">
             <FormField label="Kiểu dữ liệu" required>
               <FormSelect
                 value={dataType}

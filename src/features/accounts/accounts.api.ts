@@ -6,6 +6,7 @@ import type {
   Account,
   CreateAccountRequest,
   ResetPasswordRequest,
+  UpdateAccountRequest,
 } from "./accounts.types";
 
 export const accountsApi = {
@@ -25,6 +26,13 @@ export const accountsApi = {
   create: async (payload: CreateAccountRequest) => {
     const { data } = await http.post<ApiResponse<Account>>(
       endpoints.accounts.create,
+      payload,
+    );
+    return data;
+  },
+  update: async (id: string, payload: UpdateAccountRequest) => {
+    const { data } = await http.put<ApiResponse<Account>>(
+      endpoints.accounts.update(id),
       payload,
     );
     return data;

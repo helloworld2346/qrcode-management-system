@@ -19,6 +19,12 @@ export interface CreateAccountRequest {
   department_id?: string;
 }
 
+export interface UpdateAccountRequest {
+  full_name: string;
+  role: AccountRole;
+  department_id?: string;
+}
+
 export interface ResetPasswordRequest {
   new_password: string;
 }

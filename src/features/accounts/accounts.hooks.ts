@@ -3,7 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ApiResponse } from "@/types/api.types";
 
 import { accountsApi } from "./accounts.api";
-import type { CreateAccountRequest } from "./accounts.types";
+import type {
+  CreateAccountRequest,
+  UpdateAccountRequest,
+} from "./accounts.types";
 
 export interface AccountListFilter {
   q?: string;
@@ -38,6 +41,24 @@ export function useCreateAccount() {
   return useMutation({
     mutationFn: async (p: CreateAccountRequest) =>
       must(await accountsApi.create(p), "Tạo tài khoản thất bại"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: accountKeys.all }),
+  });
+}
+
+export function useUpdateAccount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: UpdateAccountRequest;
+    }) =>
+      must(
+        await accountsApi.update(id, payload),
+        "Cập nhật tài khoản thất bại",
+      ),
     onSuccess: () => qc.invalidateQueries({ queryKey: accountKeys.all }),
   });
 }

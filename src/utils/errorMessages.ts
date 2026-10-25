@@ -14,6 +14,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   USER_EXISTS: "Tên đăng nhập đã tồn tại.",
   CONFLICT: "Dữ liệu bị xung đột.",
   ASSET_NOT_FOUND: "Không tìm thấy tài sản.",
+  DEPARTMENT_REQUIRED: "Vui lòng chọn đơn vị cho tài khoản editor/viewer.",
+  PASSWORD_TOO_SHORT: "Mật khẩu phải có ít nhất 8 ký tự.",
 
   BAD_REQUEST: "Yêu cầu không hợp lệ.",
   BAD_JSON: "Dữ liệu gửi lên không hợp lệ.",

@@ -11,6 +11,7 @@ export const endpoints = {
     me: "/accounts/me",
     detail: (id: string) => `/accounts/${id}`,
     create: "/accounts",
+    update: (id: string) => `/accounts/${id}`,
     lock: (id: string) => `/accounts/${id}/lock`,
     unlock: (id: string) => `/accounts/${id}/unlock`,
     resetPassword: (id: string) => `/accounts/${id}/reset-password`,
