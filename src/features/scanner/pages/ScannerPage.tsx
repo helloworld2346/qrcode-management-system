@@ -12,7 +12,7 @@ import { Link } from "react-router-dom";
 import { Input } from "@/components/ui/Input";
 import { useAssetByCode } from "@/features/assets/assets.hooks";
 import { statusColor, statusLabel } from "@/features/assets/assets.types";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 function parseCode(raw: string): string {
   const s = raw.trim();

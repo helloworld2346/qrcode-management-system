@@ -17,7 +17,7 @@ import {
 } from "@/features/accounts/accounts.hooks";
 import type { Account, AccountRole } from "@/features/accounts/accounts.types";
 import { useDepartmentOptions } from "@/features/departments/departments.hooks";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 const ROLE_OPTIONS = [
   { value: "viewer", label: "Viewer" },

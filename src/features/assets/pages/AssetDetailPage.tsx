@@ -18,7 +18,7 @@ import {
   type AssetStatus,
 } from "@/features/assets/assets.types";
 import { useAuthStore } from "@/store/auth.store";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 const fmtValue = (v: unknown): string => {
   if (v === null || v === undefined || v === "") return "-";

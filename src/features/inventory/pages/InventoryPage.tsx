@@ -18,7 +18,7 @@ import {
   useScanInventory,
 } from "@/features/inventory/inventory.hooks";
 import { useAuthStore } from "@/store/auth.store";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 export function InventoryPage() {
   const user = useAuthStore((s) => s.user);

@@ -12,7 +12,7 @@ import {
   useDeleteDepartment,
   useSaveDepartment,
 } from "@/features/departments/departments.hooks";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 const slugify = (name: string) =>
   name

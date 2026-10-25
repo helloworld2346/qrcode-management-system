@@ -22,7 +22,10 @@ export function pickData<T>(res: ApiResponse<T>): T | undefined {
 }
 
 export function errorMessage(err: unknown, fallback = "Có lỗi xảy ra"): string {
-  const e = err as { response?: { data?: ApiResponse<unknown> }; message?: string };
+  const e = err as {
+    response?: { data?: ApiResponse<unknown> };
+    message?: string;
+  };
   const apiErr = e?.response?.data?.error;
   if (apiErr?.fields && Object.keys(apiErr.fields).length > 0) {
     const detail = Object.entries(apiErr.fields)

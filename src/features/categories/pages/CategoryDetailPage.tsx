@@ -17,7 +17,7 @@ import {
   useCategory,
   useRemoveCategoryAttribute,
 } from "@/features/categories/categories.hooks";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 export function CategoryDetailPage() {
   const { id = "" } = useParams();

@@ -19,7 +19,7 @@ import {
   OPTION_TYPES,
   type DataType,
 } from "@/features/attributes/attributes.types";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 const dataTypeOptions = DATA_TYPES.map((t) => ({ value: t, label: t }));
 
@@ -172,14 +172,7 @@ export function AttributesPage() {
     setDeleteErr("");
     deleteAttribute.mutate(deleteTarget.id, {
       onSuccess: () => setDeleteTarget(null),
-      onError: (e) => {
-        const msg = errorMessage(e);
-        setDeleteErr(
-          msg.includes("used by categories")
-            ? "Thuộc tính đang được dùng trong danh mục — gỡ khỏi danh mục trước."
-            : msg,
-        );
-      },
+      onError: (e) => setDeleteErr(errorMessage(e)),
     });
   };
 

@@ -12,7 +12,7 @@ import {
   useCreateCategory,
   useDeleteCategory,
 } from "@/features/categories/categories.hooks";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 const slugify = (name: string) =>
   name
@@ -80,14 +80,7 @@ export function CategoriesPage() {
     setDeleteErr("");
     deleteCategory.mutate(deleteTarget.id, {
       onSuccess: () => setDeleteTarget(null),
-      onError: (e) => {
-        const msg = errorMessage(e);
-        setDeleteErr(
-          msg.includes("still has assets")
-            ? "Danh mục vẫn còn tài sản — chuyển hoặc xóa tài sản trước."
-            : msg,
-        );
-      },
+      onError: (e) => setDeleteErr(errorMessage(e)),
     });
   };
 

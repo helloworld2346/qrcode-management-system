@@ -7,7 +7,7 @@ import type { AssetFormValues } from "@/features/assets/assets.schema";
 import { AssetForm } from "@/features/assets/components/AssetForm";
 import { useCategoryOptions } from "@/features/categories/categories.hooks";
 import { useDepartmentOptions } from "@/features/departments/departments.hooks";
-import { errorMessage } from "@/types/api.types";
+import { errorMessage } from "@/utils/errorMessages";
 
 export function AssetEditPage() {
   const { code = "" } = useParams();
