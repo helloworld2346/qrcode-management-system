@@ -7,6 +7,7 @@ export interface InventorySession {
   name: string;
   scope_type: "DEPARTMENT" | "CATEGORY";
   scope_id: string;
+  filter_category_id?: string;
   status: "OPEN" | "CLOSED";
   started_by: string;
   created_at: string;
@@ -39,7 +40,12 @@ export const inventoryApi = {
     );
     return data;
   },
-  create: async (p: { name: string; scope_type: string; scope_id: string }) => {
+  create: async (p: {
+    name: string;
+    scope_type: string;
+    scope_id: string;
+    filter_category_id?: string;
+  }) => {
     const { data } = await http.post<ApiResponse<InventorySession>>(
       endpoints.inventory.sessions,
       p,

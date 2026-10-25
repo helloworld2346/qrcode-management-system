@@ -30,6 +30,7 @@ export function useCreateInventorySession() {
       name: string;
       scope_type: string;
       scope_id: string;
+      filter_category_id?: string;
     }) => {
       const res = await inventoryApi.create(p);
       const d = pickData(res);

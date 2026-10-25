@@ -13,6 +13,8 @@ import {
   statusMeta,
   type AssetStatus,
 } from "@/features/assets/assets.types";
+import { useCategoryOptions } from "@/features/categories/categories.hooks";
+import { useDepartmentOptions } from "@/features/departments/departments.hooks";
 import type { LabelPreset } from "@/features/print/print.api";
 import { usePrintLabels } from "@/features/print/print.hooks";
 import { useAuthStore } from "@/store/auth.store";
@@ -25,16 +27,33 @@ const PRESET_OPTIONS = [
 export function AssetsPage() {
   const user = useAuthStore((s) => s.user);
   const canWrite = user?.role === "admin" || user?.role === "editor";
+  const isAdmin = user?.role === "admin";
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<AssetStatus | "all">("all");
+  const [departmentId, setDepartmentId] = useState("all");
+  const [categoryId, setCategoryId] = useState("all");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [selected, setSelected] = useState<string[]>([]);
   const [preset, setPreset] = useState<LabelPreset>("A4-3x8");
 
+  const { data: departments } = useDepartmentOptions();
+  const { data: categories } = useCategoryOptions();
+
+  const departmentOptions = [
+    { value: "all", label: "Tất cả đơn vị" },
+    ...(departments ?? []).map((d) => ({ value: d.id, label: d.name })),
+  ];
+  const categoryOptions = [
+    { value: "all", label: "Tất cả danh mục" },
+    ...(categories ?? []).map((c) => ({ value: c.id, label: c.name })),
+  ];
+
   const { data, isLoading, error } = useAssets({
     q: query || undefined,
     status: statusFilter === "all" ? undefined : statusFilter,
+    department_id: isAdmin && departmentId !== "all" ? departmentId : undefined,
+    category_id: categoryId !== "all" ? categoryId : undefined,
     page,
     size: pageSize,
   });
@@ -52,6 +71,14 @@ export function AssetsPage() {
   };
   const handleStatus = (v: AssetStatus | "all") => {
     setStatusFilter(v);
+    setPage(1);
+  };
+  const handleDepartment = (v: string) => {
+    setDepartmentId(v);
+    setPage(1);
+  };
+  const handleCategory = (v: string) => {
+    setCategoryId(v);
     setPage(1);
   };
 
@@ -104,7 +131,21 @@ export function AssetsPage() {
                 : "Tài sản thuộc phòng của bạn."}
             </p>
           </div>
-          <div className="mb-2 flex items-center">
+          <div className="mb-2 flex flex-wrap items-center">
+            {isAdmin && (
+              <FormSelect
+                value={departmentId}
+                options={departmentOptions}
+                onChange={handleDepartment}
+                className="mr-3 w-48"
+              />
+            )}
+            <FormSelect
+              value={categoryId}
+              options={categoryOptions}
+              onChange={handleCategory}
+              className="mr-3 w-48"
+            />
             <SearchInput
               value={query}
               onChange={handleQuery}

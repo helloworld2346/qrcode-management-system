@@ -25,6 +25,9 @@ export const ERROR_MESSAGES: Record<string, string> = {
   NO_IDS: "Chưa chọn tài sản để in.",
   NO_PRINTABLE_ASSETS: "Không có tài sản nào có thể in trong phạm vi cho phép.",
 
+  INVALID_FILTER: "Chỉ được lọc danh mục khi phạm vi là đơn vị.",
+  SCOPE_NOT_FOUND: "Không tìm thấy phạm vi (đơn vị/danh mục) đã chọn.",
+
   INTERNAL: "Có lỗi xảy ra phía máy chủ, vui lòng thử lại.",
 };
 

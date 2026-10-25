@@ -29,6 +29,7 @@ export function InventoryPage() {
     "DEPARTMENT",
   );
   const [scopeId, setScopeId] = useState("");
+  const [filterCategoryId, setFilterCategoryId] = useState("");
   const [createErr, setCreateErr] = useState("");
   const [active, setActive] = useState<InventorySession | null>(null);
   const [scanCode, setScanCode] = useState("");
@@ -57,12 +58,17 @@ export function InventoryPage() {
           scopeType === "DEPARTMENT" && !isAdmin
             ? user?.departmentId ?? ""
             : scopeId,
+        filter_category_id:
+          scopeType === "DEPARTMENT" && filterCategoryId
+            ? filterCategoryId
+            : undefined,
       },
       {
         onSuccess: (s) => {
           setActive(s);
           setName("");
           setScopeId("");
+          setFilterCategoryId("");
         },
         onError: (e) => setCreateErr(errorMessage(e)),
       },
@@ -95,6 +101,11 @@ export function InventoryPage() {
           label: `${c.name} (${c.code})`,
         }));
 
+  const categoryOptions = (categories ?? []).map((c) => ({
+    value: c.id,
+    label: `${c.name} (${c.code})`,
+  }));
+
   return (
     <div>
       <div className="mb-4 rounded-2xl border border-border bg-surface px-5 py-4">
@@ -125,6 +136,7 @@ export function InventoryPage() {
                 onChange={(v) => {
                   setScopeType(v as "DEPARTMENT" | "CATEGORY");
                   setScopeId("");
+                  setFilterCategoryId("");
                 }}
                 options={[
                   { value: "DEPARTMENT", label: "Theo đơn vị" },
@@ -144,6 +156,18 @@ export function InventoryPage() {
                   onChange={setScopeId}
                   placeholder="-- Chọn --"
                   options={scopeOptions}
+                />
+              </FormField>
+            </div>
+          )}
+          {scopeType === "DEPARTMENT" && (
+            <div className="mb-3 mr-3 w-56">
+              <FormField label="Lọc danh mục (tùy chọn)">
+                <FormSelect
+                  value={filterCategoryId}
+                  onChange={setFilterCategoryId}
+                  placeholder="-- Tất cả danh mục --"
+                  options={categoryOptions}
                 />
               </FormField>
             </div>
@@ -252,24 +276,36 @@ export function InventoryPage() {
 
       {active && (
         <div className="rounded-2xl border border-border bg-surface px-5 py-4">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-text text-opacity-60">
+          <h2 className="mb-1 text-sm font-semibold uppercase tracking-wider text-text text-opacity-60">
             Phiên: {active.name}
           </h2>
+          {active.filter_category_id && (
+            <p className="mb-3 text-xs text-text text-opacity-60">
+              Lọc danh mục:{" "}
+              <span className="font-medium text-text">
+                {(categories ?? []).find(
+                  (c) => c.id === active.filter_category_id,
+                )?.name ?? active.filter_category_id}
+              </span>
+            </p>
+          )}
 
           {active.status === "OPEN" && (
             <div className="mb-4 flex items-center">
-              <Input
-                value={scanCode}
-                onChange={(e) => setScanCode(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && scanCode.trim())
-                    handleScan(scanCode.trim());
-                }}
-                placeholder="Nhập/quét mã tài sản..."
-                className="mr-3 w-72"
-              />
+              <div className="mr-3 w-96">
+                <Input
+                  value={scanCode}
+                  onChange={(e) => setScanCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && scanCode.trim())
+                      handleScan(scanCode.trim());
+                  }}
+                  placeholder="Nhập/quét mã tài sản..."
+                />
+              </div>
               <Button
                 type="button"
+                className="inline-flex items-center shrink-0 whitespace-nowrap"
                 disabled={!scanCode.trim() || scanMut.isPending}
                 onClick={() => handleScan(scanCode.trim())}
               >
