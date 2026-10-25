@@ -260,8 +260,10 @@ export function CategoryDetailPage() {
                 <span className="mr-2 inline-flex items-center rounded-full bg-primary bg-opacity-10 px-2 py-0.5 font-medium text-primary">
                   {selected.data_type}
                 </span>
-                {selected.options?.length ? (
+                {Array.isArray(selected.options) && selected.options.length ? (
                   <span>Options: {selected.options.join(", ")}</span>
+                ) : selected.options && !Array.isArray(selected.options) ? (
+                  <span>Nhóm: {Object.keys(selected.options).join(", ")}</span>
                 ) : selected.validation_regex ? (
                   <span>
                     Kiểm tra: <code>{selected.validation_regex}</code>
