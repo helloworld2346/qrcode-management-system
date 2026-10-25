@@ -8,6 +8,7 @@ import { FormSelect } from "@/components/ui/FormSelect";
 import { Input } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { Textarea } from "@/components/ui/Textarea";
 import {
   useAttributesList,
   useCreateAttribute,
@@ -58,6 +59,7 @@ export function AttributesPage() {
   const [dataType, setDataType] = useState<DataType>("TEXT");
   const [description, setDescription] = useState("");
   const [optionsInput, setOptionsInput] = useState("");
+  const [cascadeInput, setCascadeInput] = useState("");
   const [regexPreset, setRegexPreset] = useState("");
   const [regex, setRegex] = useState("");
   const isCustomRegex = regexPreset === "__custom__";
@@ -90,16 +92,36 @@ export function AttributesPage() {
   const deleteAttribute = useDeleteAttribute();
 
   const needsOptions = OPTION_TYPES.includes(dataType);
+  const isCascade = dataType === "CASCADE_SELECT";
   const needsRegex = dataType === "TEXT";
 
   const parsedOptions = useMemo(() => {
-    if (!needsOptions) return undefined;
-    const items = optionsInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    return items.length ? items : undefined;
-  }, [needsOptions, optionsInput]);
+    if (needsOptions) {
+      const items = optionsInput
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      return items.length ? items : undefined;
+    }
+    if (isCascade) {
+      const tree: Record<string, string[]> = {};
+      cascadeInput
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .forEach((line) => {
+          const [parent, rest] = line.split(":");
+          const p = parent?.trim();
+          if (!p) return;
+          tree[p] = (rest ?? "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        });
+      return Object.keys(tree).length ? tree : undefined;
+    }
+    return undefined;
+  }, [needsOptions, isCascade, optionsInput, cascadeInput]);
 
   const handleCreate = () => {
     setFormError("");
@@ -111,6 +133,12 @@ export function AttributesPage() {
     }
     if (needsOptions && !parsedOptions) {
       setFormError("Kiểu SELECT / MULTI_SELECT cần ít nhất 1 option.");
+      return;
+    }
+    if (isCascade && !parsedOptions) {
+      setFormError(
+        "Kiểu CASCADE_SELECT cần ít nhất 1 dòng dạng 'Cha: con1, con2'.",
+      );
       return;
     }
     createAttribute.mutate(
@@ -230,6 +258,25 @@ export function AttributesPage() {
               </FormField>
             </div>
           )}
+
+          {isCascade && (
+            <div className="mb-3 w-full">
+              <FormField
+                label="Tùy chọn cấp (mỗi dòng: 'Cha: con1, con2')"
+                required
+              >
+                <Textarea
+                  value={cascadeInput}
+                  onChange={(e) => setCascadeInput(e.target.value)}
+                  rows={4}
+                  placeholder={
+                    "Phòng ANM: Ban Cơ yếu, Ban Kỹ thuật\nPhòng HC: Ban Văn thư, Ban Tổng hợp"
+                  }
+                />
+              </FormField>
+            </div>
+          )}
+
           {needsRegex && (
             <div className="mb-3 w-full sm:w-1/2">
               <FormField label="Kiểm tra định dạng (tùy chọn)">
@@ -324,7 +371,7 @@ export function AttributesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {a.options?.length
+                    {Array.isArray(a.options) && a.options.length
                       ? a.options.map((o) => (
                           <span
                             key={o}
@@ -333,7 +380,18 @@ export function AttributesPage() {
                             {o}
                           </span>
                         ))
-                      : "—"}
+                      : a.options && !Array.isArray(a.options)
+                        ? Object.entries(a.options).map(
+                            ([parent, children]) => (
+                              <span
+                                key={parent}
+                                className="mb-1 mr-1 inline-block rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary"
+                              >
+                                {parent} ({(children as string[]).length})
+                              </span>
+                            ),
+                          )
+                        : "—"}
                   </td>
                   <td className="px-4 py-3 text-xs text-text text-opacity-60">
                     {a.validation_regex || "—"}

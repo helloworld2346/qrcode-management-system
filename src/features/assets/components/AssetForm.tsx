@@ -41,15 +41,17 @@ function AttributeInput({
 }) {
   const v = (value ?? "") as string;
   switch (attr.data_type) {
-    case "SELECT":
+    case "SELECT": {
+      const opts = Array.isArray(attr.options) ? attr.options : [];
       return (
         <FormSelect
           value={v}
           onChange={onChange}
           placeholder="-- Chọn --"
-          options={(attr.options ?? []).map((o) => ({ value: o, label: o }))}
+          options={opts.map((o) => ({ value: o, label: o }))}
         />
       );
+    }
     case "NUMBER":
     case "DECIMAL":
       return (
@@ -85,7 +87,8 @@ function AttributeInput({
           rows={3}
         />
       );
-    case "MULTI_SELECT":
+    case "MULTI_SELECT": {
+      const opts = Array.isArray(attr.options) ? attr.options : [];
       return (
         <select
           multiple
@@ -95,13 +98,49 @@ function AttributeInput({
             onChange(Array.from(e.target.selectedOptions).map((o) => o.value))
           }
         >
-          {(attr.options ?? []).map((o) => (
+          {opts.map((o) => (
             <option key={o} value={o}>
               {o}
             </option>
           ))}
         </select>
       );
+    }
+    case "CASCADE_SELECT": {
+      const tree =
+        attr.options && !Array.isArray(attr.options)
+          ? (attr.options as Record<string, string[]>)
+          : {};
+      const cv =
+        value && typeof value === "object" && !Array.isArray(value)
+          ? (value as { parent?: string; child?: string })
+          : {};
+      const parent = cv.parent ?? "";
+      const child = cv.child ?? "";
+      const childOptions = parent ? tree[parent] ?? [] : [];
+      return (
+        <div className="flex flex-wrap">
+          <div className="mb-2 w-full sm:mb-0 sm:w-1/2 sm:pr-1">
+            <FormSelect
+              value={parent}
+              placeholder="-- Chọn cấp 1 --"
+              options={Object.keys(tree).map((p) => ({ value: p, label: p }))}
+              onChange={(p) =>
+                onChange(p ? { parent: p, child: "" } : undefined)
+              }
+            />
+          </div>
+          <div className="w-full sm:w-1/2 sm:pl-1">
+            <FormSelect
+              value={child}
+              placeholder="-- Chọn cấp 2 --"
+              options={childOptions.map((c) => ({ value: c, label: c }))}
+              onChange={(c) => onChange({ parent, child: c })}
+            />
+          </div>
+        </div>
+      );
+    }
     default:
       return (
         <Input

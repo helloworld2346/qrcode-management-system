@@ -62,7 +62,6 @@ export function AuditLogPage() {
     entity_id: string;
   }) => {
     if (!log.actor_id) {
-      // auth.login_failed: username nằm ở detail.username / entity_id
       const u = log.detail?.username;
       return typeof u === "string" ? u : log.entity_id || "—";
     }
@@ -101,10 +100,19 @@ export function AuditLogPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
-        <table className="min-w-full text-sm">
+      <div className="rounded-2xl border border-border bg-surface">
+        <table className="w-full table-fixed text-sm">
+          <colgroup>
+            <col className="w-[6%]" />
+            <col className="w-[15%]" />
+            <col className="w-[18%]" />
+            <col className="w-[15%]" />
+            <col className="w-[12%]" />
+            <col className="w-[40%]" />
+          </colgroup>
           <thead>
             <tr className="border-b border-border text-left text-text text-opacity-60">
+              <th className="px-4 py-3 font-medium">#</th>
               <th className="px-4 py-3 font-medium">Thời gian</th>
               <th className="px-4 py-3 font-medium">Người thực hiện</th>
               <th className="px-4 py-3 font-medium">Hành động</th>
@@ -116,7 +124,7 @@ export function AuditLogPage() {
             {isLoading ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-8 text-center text-text text-opacity-60"
                 >
                   Đang tải...
@@ -124,29 +132,34 @@ export function AuditLogPage() {
               </tr>
             ) : isError ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-accent">
+                <td colSpan={6} className="px-4 py-8 text-center text-accent">
                   {(error as Error).message}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-4 py-8 text-center text-text text-opacity-60"
                 >
                   Chưa có bản ghi nào.
                 </td>
               </tr>
             ) : (
-              items.map((log) => (
+              items.map((log, idx) => (
                 <tr
                   key={log.id}
                   className="border-b border-border last:border-b-0 align-top"
                 >
                   <td className="whitespace-nowrap px-4 py-3 text-text text-opacity-60">
+                    {(page - 1) * pageSize + idx + 1}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-text text-opacity-60">
                     {new Date(log.created_at).toLocaleString("vi-VN")}
                   </td>
-                  <td className="px-4 py-3 text-text">{actorName(log)}</td>
+                  <td className="break-words px-4 py-3 text-text">
+                    {actorName(log)}
+                  </td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center rounded-full bg-primary bg-opacity-10 px-2 py-0.5 text-xs font-medium text-primary">
                       {actionLabel(log.action)}
@@ -159,7 +172,10 @@ export function AuditLogPage() {
                     {log.detail && Object.keys(log.detail).length > 0 ? (
                       <ul className="space-y-0.5">
                         {Object.entries(log.detail).map(([k, v]) => (
-                          <li key={k} className="text-xs">
+                          <li
+                            key={k}
+                            className="whitespace-normal break-words text-xs"
+                          >
                             <span className="text-text text-opacity-50">
                               {k}:
                             </span>{" "}

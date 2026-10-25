@@ -20,9 +20,9 @@ import { useDepartmentOptions } from "@/features/departments/departments.hooks";
 import { errorMessage } from "@/types/api.types";
 
 const ROLE_OPTIONS = [
-  { value: "viewer", label: "Viewer (chỉ đọc)" },
-  { value: "editor", label: "Editor (theo đơn vị)" },
-  { value: "admin", label: "Admin (toàn quyền)" },
+  { value: "viewer", label: "Viewer" },
+  { value: "editor", label: "Editor" },
+  { value: "admin", label: "Admin" },
 ];
 
 const roleLabel: Record<AccountRole, string> = {

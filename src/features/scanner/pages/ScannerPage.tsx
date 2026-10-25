@@ -26,6 +26,12 @@ const fmtValue = (v: unknown): string => {
   if (v === null || v === undefined || v === "") return "-";
   if (Array.isArray(v)) return v.join(", ");
   if (typeof v === "boolean") return v ? "Có" : "Không";
+  if (typeof v === "object") {
+    const o = v as { parent?: string; child?: string };
+    if ("parent" in o || "child" in o) {
+      return [o.parent, o.child].filter(Boolean).join(" → ");
+    }
+  }
   return String(v);
 };
 

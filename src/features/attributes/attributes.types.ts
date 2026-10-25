@@ -7,7 +7,8 @@ export type DataType =
   | "DATE"
   | "DATETIME"
   | "SELECT"
-  | "MULTI_SELECT";
+  | "MULTI_SELECT"
+  | "CASCADE_SELECT";
 
 export const DATA_TYPES: DataType[] = [
   "TEXT",
@@ -19,9 +20,18 @@ export const DATA_TYPES: DataType[] = [
   "DATETIME",
   "SELECT",
   "MULTI_SELECT",
+  "CASCADE_SELECT",
 ];
 
 export const OPTION_TYPES: DataType[] = ["SELECT", "MULTI_SELECT"];
+
+export type CascadeOptions = Record<string, string[]>;
+export type AttributeOptions = string[] | CascadeOptions;
+
+export interface CascadeValue {
+  parent: string;
+  child: string;
+}
 
 export interface Attribute {
   id: string;
@@ -30,7 +40,7 @@ export interface Attribute {
   data_type: DataType;
   description?: string;
   validation_regex?: string;
-  options?: string[]; // backend trả mảng JSON trực tiếp
+  options?: AttributeOptions;
 }
 
 export interface CreateAttributeRequest {
@@ -39,5 +49,5 @@ export interface CreateAttributeRequest {
   data_type: DataType;
   description?: string;
   validation_regex?: string;
-  options?: string[];
+  options?: AttributeOptions;
 }

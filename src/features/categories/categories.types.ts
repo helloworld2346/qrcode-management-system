@@ -3,7 +3,7 @@ export interface CategoryAttribute {
   code: string;
   name: string;
   data_type: string;
-  options?: string[];
+  options?: string[] | Record<string, string[]>;
   is_required: boolean;
   default_value?: string;
   sort_order: number;
