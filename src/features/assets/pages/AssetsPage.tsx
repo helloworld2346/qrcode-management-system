@@ -128,7 +128,7 @@ export function AssetsPage() {
             <p className="mt-1 text-sm text-text text-opacity-60">
               {user?.role === "admin"
                 ? "Quản lý danh sách tài sản toàn đơn vị."
-                : "Tài sản thuộc phòng của bạn."}
+                : "Tài sản thuộc đơn vị của bạn."}
             </p>
           </div>
           <div className="mb-2 flex flex-wrap items-center">

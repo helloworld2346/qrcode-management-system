@@ -16,7 +16,7 @@ interface Props {
   className?: string;
 }
 
-const DROPDOWN_MAX_HEIGHT = 240; // khớp max-h-60 (15rem)
+const DROPDOWN_MAX_HEIGHT = 240;
 
 export function FormSelect({
   value,
@@ -39,8 +39,21 @@ export function FormSelect({
         onBlur?.();
       }
     };
+    const onScroll = (e: Event) => {
+      if (
+        ref.current &&
+        !(e.target instanceof Node && ref.current.contains(e.target))
+      ) {
+        setOpen(false);
+        onBlur?.();
+      }
+    };
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      window.removeEventListener("scroll", onScroll, true);
+    };
   }, [onBlur]);
 
   useLayoutEffect(() => {

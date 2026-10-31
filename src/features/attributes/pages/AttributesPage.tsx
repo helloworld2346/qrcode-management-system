@@ -263,7 +263,7 @@ export function AttributesPage() {
                   onChange={(e) => setCascadeInput(e.target.value)}
                   rows={4}
                   placeholder={
-                    "Phòng ANM: Ban Cơ yếu, Ban Kỹ thuật\nPhòng HC: Ban Văn thư, Ban Tổng hợp"
+                    "Phòng TM: Ban Thông tin, Ban Tác huấn\nPhòng HC-KT: Ban Quân Y, Ban ....."
                   }
                 />
               </FormField>

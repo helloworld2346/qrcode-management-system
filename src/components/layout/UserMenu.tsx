@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiLogOut, FiMoon, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +13,29 @@ export function UserMenu() {
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggle);
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onScroll = (e: Event) => {
+      if (
+        ref.current &&
+        !(e.target instanceof Node && ref.current.contains(e.target))
+      ) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, []);
 
   const handleLogout = () => {
     logoutMutate(undefined, { onSettled: () => navigate("/login") });
@@ -21,7 +44,7 @@ export function UserMenu() {
   const isDark = theme === "dark";
 
   return (
-    <div className="relative">
+    <div ref={ref} className="relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

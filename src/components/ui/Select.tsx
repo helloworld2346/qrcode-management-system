@@ -27,8 +27,20 @@ export function Select({ value, options, onChange, className = "" }: Props) {
         setOpen(false);
       }
     };
+    const onScroll = (e: Event) => {
+      if (
+        ref.current &&
+        !(e.target instanceof Node && ref.current.contains(e.target))
+      ) {
+        setOpen(false);
+      }
+    };
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      window.removeEventListener("scroll", onScroll, true);
+    };
   }, []);
 
   useLayoutEffect(() => {
